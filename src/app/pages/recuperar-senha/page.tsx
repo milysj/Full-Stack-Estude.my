@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useLayoutEffect } from "react";
+import { useEffect, useState, useLayoutEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "react-bootstrap";
 
-export default function RecuperarSenhaPage() {
+function RecuperarSenhaContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
-  
+
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -31,8 +31,11 @@ export default function RecuperarSenhaPage() {
       }
 
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-        const res = await fetch(`${API_URL}/api/users/verificar-token/${token}`);
+        const API_URL =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const res = await fetch(
+          `${API_URL}/api/users/verificar-token/${token}`
+        );
 
         if (res.ok) {
           const data = await res.json();
@@ -77,7 +80,8 @@ export default function RecuperarSenhaPage() {
     setSucesso("");
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
       const res = await fetch(`${API_URL}/api/users/redefinir-senha`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -120,15 +124,23 @@ export default function RecuperarSenhaPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center bg-gray-50 px-4"
-        style={{ backgroundImage: `url('/img/background-image-login-register.png')` }}
+        style={{
+          backgroundImage: `url('/img/background-image-login-register.png')`,
+        }}
       >
         <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
           <div className="mb-6 text-center">
-            <Image width={400} height={128} src="/svg/EstudeMyLogo.svg" alt="Logo" />
+            <Image
+              width={400}
+              height={128}
+              src="/svg/EstudeMyLogo.svg"
+              alt="Logo"
+            />
           </div>
           <div className="text-center">
             <p className="text-red-600 mb-4">
-              Token inválido ou expirado. Solicite uma nova recuperação de senha.
+              Token inválido ou expirado. Solicite uma nova recuperação de
+              senha.
             </p>
             <Button
               variant="primary"
@@ -145,11 +157,18 @@ export default function RecuperarSenhaPage() {
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-gray-50 px-4"
-      style={{ backgroundImage: `url('/img/background-image-login-register.png')` }}
+      style={{
+        backgroundImage: `url('/img/background-image-login-register.png')`,
+      }}
     >
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <div className="mb-6 text-center">
-          <Image width={400} height={128} src="/svg/EstudeMyLogo.svg" alt="Logo" />
+          <Image
+            width={400}
+            height={128}
+            src="/svg/EstudeMyLogo.svg"
+            alt="Logo"
+          />
         </div>
 
         <h2 className="text-2xl font-bold text-center mb-4">Redefinir Senha</h2>
@@ -168,7 +187,9 @@ export default function RecuperarSenhaPage() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-sm text-left mb-1">Confirmar nova senha:</label>
+            <label className="text-sm text-left mb-1">
+              Confirmar nova senha:
+            </label>
             <input
               type="password"
               placeholder="Confirme sua nova senha"
@@ -197,3 +218,18 @@ export default function RecuperarSenhaPage() {
   );
 }
 
+export default function RecuperarSenhaPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <p className="text-gray-600">Carregando...</p>
+          </div>
+        </div>
+      }
+    >
+      <RecuperarSenhaContent />
+    </Suspense>
+  );
+}

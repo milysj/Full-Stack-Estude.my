@@ -1,50 +1,64 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect, Suspense } from "react";
 import Footer from "@/app/components/Footer"; // Componente do rodapé da página
-import Topo from "@/app/components/Topo";     // Componente do topo / barra de navegação
+import Topo from "@/app/components/Topo"; // Componente do topo / barra de navegação
 import Trilhas from "@/app/components/Triha"; // Componente que exibe as trilhas/cursos
 import { useSearchParams } from "next/navigation";
 
-export default function TrilhaPage() {
-    const searchParams = useSearchParams();
-    const trilhaId = searchParams.get("trilhaId");
+function TrilhaContent() {
+  const searchParams = useSearchParams();
+  const trilhaId = searchParams.get("trilhaId");
 
-    useLayoutEffect(() => {
-        document.title = "Trilha - Estude.My";
-    }, []);
-    
-    return (
-        <>
-            {/* ===========================
+  useLayoutEffect(() => {
+    document.title = "Trilha - Estude.My";
+  }, []);
+
+  return (
+    <>
+      {/* ===========================
           Container principal da página
           =========================== */}
-            <div
-                className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
-                style={{
-                    backgroundImage: "url('/img/backgroundteste1.png')", // Imagem de fundo
-                    backgroundColor: '#f3f4f6'                           // Cor de fundo alternativa
-                }}
-            >
-                {/* ===========================
+      <div
+        className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+        style={{
+          backgroundImage: "url('/img/backgroundteste1.png')", // Imagem de fundo
+          backgroundColor: "#f3f4f6", // Cor de fundo alternativa
+        }}
+      >
+        {/* ===========================
             Container relativo para controle de z-index
             =========================== */}
-                <div className="relative z-10">
+        <div className="relative z-10">
+          {/* Estrutura principal em coluna com espaçamento */}
+          <div className="flex min-h-screen flex-col transition-all duration-300 justify-space-between">
+            {/* Topo / barra de navegação */}
+            <Topo />
 
-                    {/* Estrutura principal em coluna com espaçamento */}
-                    <div className="flex min-h-screen flex-col transition-all duration-300 justify-space-between">
+            {/* Componente que exibe as trilhas/cursos */}
+            <Trilhas trilhaId={trilhaId || undefined} />
 
-                        {/* Topo / barra de navegação */}
-                        <Topo/>
+            {/* Rodapé */}
+            <Footer />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
-                        {/* Componente que exibe as trilhas/cursos */}
-                        <Trilhas trilhaId={trilhaId || undefined} />
-
-                        {/* Rodapé */}
-                        <Footer/>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
+export default function TrilhaPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <p className="text-gray-600">Carregando...</p>
+          </div>
+        </div>
+      }
+    >
+      <TrilhaContent />
+    </Suspense>
+  );
 }
