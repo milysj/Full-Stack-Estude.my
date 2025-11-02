@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect, Suspense } from "react";
 import Footer from "@/app/components/Footer"; // Componente do rodapé
 import Topo from "@/app/components/Topo";     // Componente do topo/navegação
 import Questao from "@/app/components/Questao"; // Componente de questão do curso
@@ -32,7 +32,15 @@ export default function Curso() {
 
                     {/* Área principal do curso */}
                     <main className="min-h-screen bg-transparent">
-                        <Questao/>
+                        <Suspense
+                            fallback={
+                                <div className="flex items-center justify-center min-h-screen">
+                                    <p className="text-gray-600">Carregando quiz...</p>
+                                </div>
+                            }
+                        >
+                            <Questao/>
+                        </Suspense>
                     </main>
 
                     {/* Rodapé */}

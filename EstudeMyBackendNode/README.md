@@ -8,11 +8,11 @@ Professores podem disponibilizar seus cursos, aulas e conteúdos personalizados,
 
 ## 🔗 Índice
 
-- [🎓 EstudeMy - Backend API](#-estudemy---backend-api)
+- [🎓 EstudeMy - Backend](#-estudemy---backend)
   - [🔗 Índice](#-índice)
   - [📝 Sobre o Projeto](#-sobre-o-projeto)
   - [🏗️ Arquitetura do Sistema](#️-arquitetura-do-sistema)
-    - [📋 Casos de uso](#-casos-de-uso)
+  - [📋 Casos de uso](#-casos-de-uso)
   - [⚙️ Tecnologias Utilizadas](#️-tecnologias-utilizadas)
     - [Backend](#backend)
     - [DevOps](#devops)

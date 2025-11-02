@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, Suspense } from "react";
 import { Plus, Save, X } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -16,7 +16,7 @@ interface Pergunta {
   respostaCorreta: number;
 }
 
-export default function CriarFase() {
+function CriarFaseContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const faseId = searchParams.get("faseId");
@@ -85,6 +85,7 @@ export default function CriarFase() {
         // Se tiver faseId, carregar fase existente
         if (faseId) {
           const faseData = (await buscarFasePorId(faseId)) as {
+            _id: string;
             titulo?: string;
             descricao?: string;
             conteudo?: string;
@@ -411,5 +412,13 @@ export default function CriarFase() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function CriarFase() {
+  return (
+    <Suspense fallback={<p className="p-6">Carregando dados...</p>}>
+      <CriarFaseContent />
+    </Suspense>
   );
 }

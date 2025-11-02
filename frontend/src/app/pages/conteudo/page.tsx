@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { buscarFasePorId } from "@/app/services/faseService";
 
@@ -11,11 +11,11 @@ interface Fase {
   conteudo?: string;
 }
 
-export default function ConteudoPage() {
+function ConteudoContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const faseIdParam = searchParams.get("faseId");
-  
+
   const [fase, setFase] = useState<Fase | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
@@ -143,3 +143,16 @@ export default function ConteudoPage() {
   );
 }
 
+export default function ConteudoPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+          <div className="text-lg text-gray-600">Carregando conteúdo...</div>
+        </main>
+      }
+    >
+      <ConteudoContent />
+    </Suspense>
+  );
+}

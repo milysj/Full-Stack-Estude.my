@@ -18,9 +18,56 @@ dotenv.config();
 
 const app = express();
 
+// Configuração CORS
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permitir requisições sem origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Lista de origens permitidas
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://estude-my.vercel.app",
+      process.env.FRONTEND_URL,
+    ].filter(Boolean); // Remove valores undefined/null
+    
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Temporariamente permitir todas por desenvolvimento
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
 // Middlewares globais
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Rota de health check para o Render
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "Servidor está funcionando",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Rota raiz
+app.get("/", (req, res) => {
+  res.json({
+    message: "API Estude.My está rodando",
+    version: "1.0.0",
+    endpoints: {
+      docs: "/api-docs",
+      health: "/health",
+    },
+  });
+});
 
 // Rotas
 app.use("/api/trilhas", trilhaRoutes);
