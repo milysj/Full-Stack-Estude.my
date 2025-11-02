@@ -15,6 +15,7 @@ const trilhaSchema = new mongoose.Schema({
   disponibilidade: { type: String, enum: ["Privado", "Aberto"], default: "Privado" },
   pagamento: { type: String, enum: ["Paga", "Gratuita"], default: "Gratuita" },
   faseSelecionada: { type: Number, required: true },
+  imagem: { type: String, default: "/img/fases/vila.jpg" }, // Caminho da imagem
   usuariosIniciaram: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "User" 

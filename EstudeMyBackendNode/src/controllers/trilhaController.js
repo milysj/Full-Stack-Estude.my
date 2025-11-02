@@ -9,10 +9,14 @@ export const criarTrilha = async (req, res) => {
     // dataCriacao é obrigatória no schema
     const dataCriacao = new Date().toISOString().split("T")[0];
 
+    // Garantir que a imagem seja sempre definida
+    const imagem = req.body.imagem || "/img/fases/vila.jpg";
+
     const trilha = new Trilha({
       ...req.body,
       usuario: userId,
       dataCriacao,
+      imagem, // Garante que a imagem seja salva
       usuariosIniciaram: [],
       visualizacoes: 0,
     });
@@ -45,9 +49,17 @@ export const atualizarTrilha = async (req, res) => {
     const userId = req.user?._id;
     const { id } = req.params;
 
+    // Garantir que a imagem seja sempre definida (ou mantém a atual se não fornecida)
+    const dadosAtualizacao = { ...req.body };
+    if (!dadosAtualizacao.imagem) {
+      // Se não fornecer imagem, mantém a existente ou usa padrão
+      const trilhaAtual = await Trilha.findById(id);
+      dadosAtualizacao.imagem = trilhaAtual?.imagem || "/img/fases/vila.jpg";
+    }
+
     const trilha = await Trilha.findOneAndUpdate(
       { _id: id, usuario: userId },
-      req.body,
+      dadosAtualizacao,
       { new: true }
     );
 
