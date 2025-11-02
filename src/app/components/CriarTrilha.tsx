@@ -344,7 +344,7 @@ export default function GerenciarTrilha() {
 
       {/* ================= Formulário de criação/edição ================= */}
       {mostrarFormulario && (
-        <div className="bg-white p-6 rounded shadow-md w-full max-w-3xl mb-8">
+        <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-3xl mb-8 overflow-x-auto">
           <h1 className="text-3xl font-bold mb-6">
             {modoEdicao ? "Editar" : "Criar nova"}{" "}
             <span className="text-pink-500">trilha</span>
@@ -449,7 +449,7 @@ export default function GerenciarTrilha() {
             </div>
 
             {/* Disponibilidade e pagamento */}
-            <div className="flex flex-col sm:flex-row gap-20 justify-content-center">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-20 justify-center sm:justify-start">
               <div>
                 <p className="font-semibold mb-1">Disponibilidade</p>
                 <label className="mr-4">
@@ -503,21 +503,21 @@ export default function GerenciarTrilha() {
             </div>
 
             {/* Carrossel de fases */}
-            <div>
+            <div className="w-full">
               <p className="font-semibold mb-2">Fases da trilha</p>
               {erros.faseSelecionada && (
                 <p className="text-red-500 text-sm mb-2">
                   {erros.faseSelecionada}
                 </p>
               )}
-              <div className="flex overflow-x-auto gap-4 py-2 justify-content-center">
+              <div className="flex overflow-x-auto gap-3 sm:gap-4 py-2 pb-3">
                 {fases.map((fase) => {
                   const isSelected = trilha.faseSelecionada === fase.id;
                   return (
                     <div
                       key={fase.id}
                       onClick={() => handleFaseClick(fase.id)}
-                      className={`shrink-0 w-40 h-40 border-4 rounded-xl overflow-hidden relative cursor-pointer transition-all duration-200 transform
+                      className={`shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 border-4 rounded-xl overflow-hidden relative cursor-pointer transition-all duration-200 transform
                         ${
                           isSelected
                             ? "border-blue-600 shadow-lg scale-105"
@@ -529,16 +529,25 @@ export default function GerenciarTrilha() {
                         alt={fase.nome}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                        {fase.paga ? <Lock size={14} /> : <Unlock size={14} />}
-                        <span>{fase.paga ? "Paga" : "Gratuita"}</span>
+                      <div className="absolute top-1 left-1 sm:top-2 sm:left-2 flex items-center gap-1 bg-black/50 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
+                        {fase.paga ? (
+                          <Lock size={12} className="sm:w-3.5 sm:h-3.5" />
+                        ) : (
+                          <Unlock size={12} className="sm:w-3.5 sm:h-3.5" />
+                        )}
+                        <span className="hidden sm:inline">
+                          {fase.paga ? "Paga" : "Gratuita"}
+                        </span>
+                        <span className="sm:hidden">
+                          {fase.paga ? "P" : "G"}
+                        </span>
                       </div>
-                      <div className="absolute bottom-0 w-full bg-black/40 text-white text-center py-1 text-sm">
+                      <div className="absolute bottom-0 w-full bg-black/40 text-white text-center py-0.5 sm:py-1 text-xs sm:text-sm">
                         {fase.nome}
                       </div>
                       {isSelected && (
-                        <span className="absolute bottom-2 right-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-md">
-                          Selecionado
+                        <span className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-blue-600 text-white text-[8px] sm:text-[10px] font-bold px-1 sm:px-2 py-0.5 rounded shadow-md">
+                          ✓
                         </span>
                       )}
                     </div>
@@ -548,17 +557,17 @@ export default function GerenciarTrilha() {
             </div>
 
             {/* Botões Salvar / Cancelar */}
-            <div className="flex gap-4 mt-4">
+            <div className="flex flex-wrap gap-3 sm:gap-4 mt-4">
               <button
                 type="button"
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+                className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded hover:bg-blue-700 transition flex-1 sm:flex-none min-w-[100px]"
                 onClick={salvarTrilha}
               >
                 {modoEdicao ? "Atualizar" : "Salvar"}
               </button>
               <button
                 type="button"
-                className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition"
+                className="bg-gray-500 text-white px-4 sm:px-6 py-2 rounded hover:bg-gray-600 transition flex-1 sm:flex-none min-w-[100px]"
                 onClick={() => {
                   resetForm();
                   setMostrarFormulario(false);
