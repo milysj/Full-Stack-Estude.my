@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-// Mock de fases
+// Mock de fases - usando as imagens reais das fases
 const fases = [
-  { id: 1, nome: "Trilha 1", img: "/fases/fase1.jpg", paga: false },
-  { id: 2, nome: "Trilha 2", img: "/fases/fase2.jpg", paga: true },
-  { id: 3, nome: "Trilha 3", img: "/fases/fase3.jpg", paga: false },
+  { id: 1, nome: "Vila", img: "/img/fases/vila.jpg", paga: false },
+  { id: 2, nome: "Montanha", img: "/img/fases/montanha.jpg", paga: true },
+  { id: 3, nome: "Deserto", img: "/img/fases/deserto.jpg", paga: false },
+  { id: 4, nome: "Castelo", img: "/img/fases/castelo.jpg", paga: false },
 ];
 
 // Lista de matérias
@@ -26,6 +27,8 @@ const materias = [
   "Biologia",
 ];
 
+// Imagens disponíveis
+
 // Interface da trilha
 interface Trilha {
   id?: number;
@@ -39,6 +42,7 @@ interface Trilha {
   disponibilidade: string;
   pagamento: string;
   faseSelecionada: number | null;
+  imagem?: string;
 }
 
 export default function GerenciarTrilha() {
@@ -55,6 +59,7 @@ export default function GerenciarTrilha() {
     disponibilidade: "Privado",
     pagamento: "Gratuita",
     faseSelecionada: null,
+    imagem: "/img/fases/vila.jpg",
   });
   const [modoEdicao, setModoEdicao] = useState(false);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -98,7 +103,15 @@ export default function GerenciarTrilha() {
   };
 
   const handleFaseClick = (id: number) => {
-    setTrilha((prev) => ({ ...prev, faseSelecionada: id }));
+    // Buscar a fase selecionada e vincular sua imagem à trilha
+    const faseSelecionada = fases.find((f) => f.id === id);
+    if (faseSelecionada) {
+      setTrilha((prev) => ({
+        ...prev,
+        faseSelecionada: id,
+        imagem: faseSelecionada.img, // Vincula a imagem da fase à trilha
+      }));
+    }
   };
 
   const validarTrilha = () => {
@@ -123,6 +136,18 @@ export default function GerenciarTrilha() {
       return;
     }
 
+    // Garantir que a imagem esteja sempre definida
+    let imagemFinal = trilha.imagem;
+    if (!imagemFinal && trilha.faseSelecionada !== null) {
+      const fase = fases.find((f) => f.id === trilha.faseSelecionada);
+      imagemFinal = fase ? fase.img : "/img/fases/vila.jpg";
+    }
+
+    const trilhaParaEnviar = {
+      ...trilha,
+      imagem: imagemFinal || "/img/fases/vila.jpg", // Sempre inclui a imagem
+    };
+
     const url = modoEdicao
       ? `${API_URL}/api/trilhas/${trilha.id}`
       : `${API_URL}/api/trilhas`;
@@ -135,7 +160,7 @@ export default function GerenciarTrilha() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`, // ✅ Token incluído aqui
         },
-        body: JSON.stringify(trilha),
+        body: JSON.stringify(trilhaParaEnviar),
       });
 
       if (!response.ok) {
@@ -163,9 +188,21 @@ export default function GerenciarTrilha() {
   };
 
   const editarTrilha = (t: Trilha) => {
+    // Se não tiver imagem, busca a imagem da fase selecionada
+    let imagemTrilha = t.imagem;
+    if (
+      !imagemTrilha &&
+      t.faseSelecionada !== null &&
+      t.faseSelecionada !== undefined
+    ) {
+      const fase = fases.find((f) => f.id === t.faseSelecionada);
+      imagemTrilha = fase ? fase.img : "/img/fases/vila.jpg";
+    }
+
     setTrilha({
       ...t,
       id: t.id ?? (t as any)._id, // garante que id receba o valor de _id caso exista
+      imagem: imagemTrilha || "/img/fases/vila.jpg", // Garante que tenha uma imagem padrão
     });
     setModoEdicao(true);
     setMostrarFormulario(true);
@@ -215,10 +252,27 @@ export default function GerenciarTrilha() {
       disponibilidade: "Privado",
       pagamento: "Gratuita",
       faseSelecionada: null,
+      imagem: "/img/fases/vila.jpg",
     });
     setErros({});
     setModoEdicao(false);
   };
+
+  // Efeito para garantir que a imagem esteja vinculada à fase selecionada ao editar
+  useEffect(() => {
+    if (
+      modoEdicao &&
+      trilha.faseSelecionada !== null &&
+      trilha.faseSelecionada !== undefined
+    ) {
+      const fase = fases.find((f) => f.id === trilha.faseSelecionada);
+      if (fase && (!trilha.imagem || trilha.imagem === "/img/fases/vila.jpg")) {
+        // Se não tiver imagem ou tiver a padrão, atualiza com a da fase
+        setTrilha((prev) => ({ ...prev, imagem: fase.img }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modoEdicao, trilha.faseSelecionada]);
 
   // ================== JSX ==================
   return (
@@ -244,6 +298,13 @@ export default function GerenciarTrilha() {
               key={t.id ?? (t as any)._id} // usa id ou _id do MongoDB
               className="bg-white rounded shadow-md p-4 flex flex-col gap-2"
             >
+              {t.imagem && (
+                <img
+                  src={t.imagem}
+                  alt={t.titulo}
+                  className="w-full h-32 object-cover rounded mb-2"
+                />
+              )}
               <h3 className="font-semibold text-lg">{t.titulo}</h3>
               <p className="text-sm">{t.descricao}</p>
               <p className="text-xs text-gray-500">

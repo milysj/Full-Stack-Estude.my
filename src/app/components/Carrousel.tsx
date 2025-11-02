@@ -10,6 +10,7 @@ interface Trilha {
   materia: string;
   dificuldade: string;
   image?: string;
+  imagem?: string; // Campo do backend
 }
 
 interface Props {
@@ -78,11 +79,11 @@ export default function Carrousel({ items = [], onClick }: Props) {
               className="flex-shrink-0 w-full rounded-lg border bg-white shadow hover:shadow-xl hover:scale-105 cursor-pointer transition-all duration-200 transform"
               style={{ minWidth: cardWidth, maxWidth: cardWidth }}
             >
-              {item.image && (
+              {(item.image || item.imagem) && (
                 <img
-                  src={item.image}
+                  src={item.image || item.imagem}
                   alt={item.titulo}
-                  className="mx-auto max-w-30 max-h-24 object-contain my-2 rounded-xl"
+                  className="w-full h-32 object-cover rounded-t-lg"
                 />
               )}
               <div className="p-2">
