@@ -8,16 +8,6 @@ import Image from "next/image";
 import Script from "next/script";
 import { useLayoutEffect } from "react";
 
-// Configuração da fonte Jaro
-
-
-// Ícones e tooltips que aparecem na barra lateral
-const tooltips = [
-    {icon: "🎮", text: "Estude jogando!", color: "#9CC5EB"},
-    {icon: "🏆", text: "Suba no ranking!", color: "#f9bc60"},
-    {icon: "💎", text: "Ganhe recompensas!", color: "#7f5af0"},
-];
-
 // Componente principal da Landing Page
 export default function LandingPage() {
     useLayoutEffect(() => {
@@ -43,30 +33,6 @@ export default function LandingPage() {
             <CoinRain/> {/* Animação de moedas caindo */}
 
             {/* Barra lateral fixa com ícones e tooltips */}
-            <div className="fixed top-1/2 left-4 z-30 flex flex-col gap-6 -translate-y-1/2 ">
-                {tooltips.map(({icon, text, color}, index) => (
-                    <div className="group relative flex items-center" key={index}>
-                        {/* Ícone com animação e destaque */}
-                        <motion.div
-                            whileHover={{scale: 1.1}}
-                            className="bg-[#163043cc] backdrop-blur-md border-2 p-4 rounded-xl shadow-md cursor-pointer"
-                            style={{borderColor: color, boxShadow: `0 0 12px ${color}`}}
-                        >
-                            <span className="text-3xl">{icon}</span>
-                        </motion.div>
-
-                        {/* Tooltip (aparece no hover) */}
-                        <motion.div
-                            initial={{opacity: 0, x: 0}}
-                            whileHover={{opacity: 1, x: 0}}
-                            transition={{duration: 0.3}}
-                            className="absolute left-16 bg-[#9CC5EB] text-[#163043] px-4 py-2 rounded-md whitespace-nowrap text-md font-bold shadow-lg"
-                        >
-                            {text}
-                        </motion.div>
-                    </div>
-                ))}
-            </div>
 
             {/* Conteúdo principal (logo + botões) */}
             <div
