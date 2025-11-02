@@ -85,7 +85,7 @@ export const listarTrilhasSalvas = async (req, res) => {
     const licoesSalvas = await LicaoSalva.find({ usuario: userId })
       .populate({
         path: "trilha",
-        select: "titulo descricao materia dificuldade image usuario",
+        select: "titulo descricao materia dificuldade imagem usuario",
         populate: {
           path: "usuario",
           select: "nome username",

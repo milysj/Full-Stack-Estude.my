@@ -13,6 +13,7 @@ interface Trilha {
   materia: string;
   dificuldade: string;
   image?: string;
+  imagem?: string; // Campo do backend
 }
 
 export default function MenuTrilhas() {
