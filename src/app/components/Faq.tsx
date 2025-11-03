@@ -1,17 +1,17 @@
 const Faq = () => {
     return (
-      // Container principal com largura máxima, padding e borda arredondada
-      <div className="flex items-center justify-center px-35 py-4 m-auto mx-5">
+      // Container principal com largura máxima, padding responsivo e borda arredondada
+      <div className="flex items-center justify-center px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-6 w-full">
         {/* ===============================
-          Card principal da conta
+          Card principal da FAQ
           =============================== */}
-        <div className="bg-white p-6 rounded shadow-md w-full mx-auto">
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded shadow-md w-full max-w-4xl mx-auto">
           {/* Seção 1 */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 break-words">
               O que é a plataforma gamificada?
             </h2>
-            <p className="text-gray-700">
+            <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed">
               Nossa plataforma é um ambiente de aprendizado interativo que
               utiliza elementos de jogos, como pontos, conquistas e desafios,
               para motivar os alunos a aprender. Professores criam trilhas
@@ -20,11 +20,11 @@ const Faq = () => {
           </section>
 
           {/* Seção 2 */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 break-words">
               Como os professores criam trilhas?
             </h2>
-            <p className="text-gray-700">
+            <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed">
               Os professores têm acesso a um painel exclusivo, onde podem criar
               módulos de aprendizado, adicionar atividades, vídeos, quizzes e
               configurar níveis de dificuldade. As trilhas podem ser adaptadas
@@ -33,11 +33,11 @@ const Faq = () => {
           </section>
 
           {/* Seção 3 */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 break-words">
               Os alunos ganham recompensas?
             </h2>
-            <p className="text-gray-700">
+            <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed">
               Sim! Os alunos ganham pontos ao completar atividades, podem
               desbloquear conquistas e avançar em um sistema de níveis. Isso os
               incentiva a continuar aprendendo enquanto se divertem.
@@ -45,11 +45,11 @@ const Faq = () => {
           </section>
 
           {/* Seção 4 */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 break-words">
               Quais disciplinas podem ser ensinadas?
             </h2>
-            <p className="text-gray-700">
+            <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed">
               A plataforma suporta qualquer disciplina! Professores podem criar
               trilhas em matemática, ciências, idiomas, história, entre outras.
               O conteúdo é totalmente personalizável.
@@ -57,11 +57,11 @@ const Faq = () => {
           </section>
 
           {/* Seção 5 */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">
+          <section className="mb-6 sm:mb-8 last:mb-0">
+            <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 break-words">
               É necessário pagar para usar a plataforma?
             </h2>
-            <p className="text-gray-700">
+            <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed">
               A plataforma possui um plano gratuito com recursos básicos e
               planos premium que oferecem funcionalidades adicionais, como
               relatórios avançados, suporte prioritário e ferramentas de

@@ -305,6 +305,8 @@ const Topo = () => {
           style={{
             minHeight: isMobile ? "48px" : "auto",
             padding: isMobile ? "4px 0" : "8px 0",
+            display: "flex",
+            alignItems: "center",
           }}
         >
           <Container
@@ -314,33 +316,44 @@ const Topo = () => {
               minHeight: isMobile ? "40px" : "auto",
               display: "flex",
               alignItems: "center",
+              height: "100%",
             }}
           >
             {/* Logo do sistema - ALTERADO: Esconde se a pesquisa mobile estiver aberta */}
             {(!isMobile || (isMobile && !mobileSearchOpen)) && (
-              <Link href="/pages/home">
+              <Link
+                href="/pages/home"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
                 <div
                   style={{
-                    marginLeft: isMobile ? "80px" : "80px",
+                    marginLeft: isMobile ? "50px" : "80px",
                     transition: "margin-left 0.3s",
                     display: "flex",
                     alignItems: "center",
-                    height: isMobile ? "32px" : "auto",
+                    height: "100%",
                   }}
                 >
                   <div
                     style={{
-                      transform: isMobile ? "scale(0.7)" : "scale(1)",
+                      transform: isMobile ? "scale(1)" : "scale(1.5)",
                       transformOrigin: "left center",
+                      display: "flex",
+                      alignItems: "center",
                     }}
                   >
                     {/* Logo */}
-                    <div className="mb-6 text-center my-1">
+                    <div>
                       <Image
-                        width={350}
+                        width={200}
                         height={128}
                         src="/svg/EstudeMyLogo.svg"
                         alt="Logo"
+                        style={{ display: "block" }}
                       />
                     </div>
                   </div>
@@ -362,7 +375,10 @@ const Topo = () => {
                   aria-label="Search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ height: "38px" }}
+                  style={{
+                    height: "38px",
+                    marginLeft: "80px",
+                  }}
                 />
                 <Button
                   variant="outline-primary"

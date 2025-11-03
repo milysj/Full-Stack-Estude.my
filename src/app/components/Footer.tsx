@@ -12,7 +12,7 @@ const Footer = () => {
                 {/* Redes sociais */}
                 <div className="flex flex-row-reverse gap-3">
                     <a
-                        href="https://github.com/Lupateli/EstudeMy"
+                        href="https://github.com/milysj/Full-Stack-Estude.my"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hover:text-blue-400 transition-colors"

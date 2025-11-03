@@ -279,7 +279,7 @@ export default function GerenciarTrilha() {
     <div className="flex flex-col items-center p-4 mx-auto w-full max-w-6xl">
       {/* ================= Botão Criar Trilha ================= */}
       <button
-        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition mb-6 self-start"
+        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition mb-6 mx-auto"
         onClick={() => {
           resetForm();
           setMostrarFormulario(true);
@@ -290,13 +290,17 @@ export default function GerenciarTrilha() {
 
       {/* ================= Lista de Trilhas ================= */}
       <div className="w-full mb-8">
-        <h2 className="text-2xl font-bold mb-4">Minhas Trilhas</h2>
-        {trilhas.length === 0 && <p>Nenhuma trilha criada ainda.</p>}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <h2 className="text-2xl font-bold mb-4 text-center mt-4">
+          Minhas Trilhas
+        </h2>
+        {trilhas.length === 0 && (
+          <p className="text-center">Nenhuma trilha criada ainda.</p>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
           {trilhas.map((t) => (
             <div
               key={t.id ?? (t as any)._id} // usa id ou _id do MongoDB
-              className="bg-white rounded shadow-md p-4 flex flex-col gap-2"
+              className="bg-white rounded shadow-md p-3 sm:p-4 flex flex-col gap-2 overflow-hidden w-full max-w-sm"
             >
               {t.imagem && (
                 <img
@@ -305,15 +309,17 @@ export default function GerenciarTrilha() {
                   className="w-full h-32 object-cover rounded mb-2"
                 />
               )}
-              <h3 className="font-semibold text-lg">{t.titulo}</h3>
-              <p className="text-sm">{t.descricao}</p>
-              <p className="text-xs text-gray-500">
+              <h3 className="font-semibold text-base sm:text-lg break-words">
+                {t.titulo}
+              </h3>
+              <p className="text-xs sm:text-sm break-words">{t.descricao}</p>
+              <p className="text-xs text-gray-500 break-words">
                 {t.materia} - {t.dificuldade} -{" "}
                 {t.pagamento === "Paga" ? "Pago" : "Gratuito"}
               </p>
-              <div className="flex justify-between mt-2">
+              <div className="flex flex-col gap-2 mt-2">
                 <button
-                  className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                  className="bg-yellow-500 text-white px-3 py-1.5 rounded hover:bg-yellow-600 w-full whitespace-nowrap"
                   onClick={() => editarTrilha(t)}
                 >
                   Editar
@@ -325,13 +331,13 @@ export default function GerenciarTrilha() {
                       `/pages/gerenciarFases?trilhaId=${t._id}&titulo=${t.titulo}`
                     )
                   }
-                  className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-4 py-2 rounded"
+                  className="bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 w-full whitespace-nowrap"
                 >
                   Gerenciar Fases
                 </button>
 
                 <button
-                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                  className="bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700 w-full whitespace-nowrap"
                   onClick={() => deletarTrilha(t.id ?? (t as any)._id)}
                 >
                   Deletar
@@ -344,7 +350,7 @@ export default function GerenciarTrilha() {
 
       {/* ================= Formulário de criação/edição ================= */}
       {mostrarFormulario && (
-        <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-3xl mb-8 overflow-x-auto">
+        <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-3xl mb-8 overflow-x-auto mx-auto">
           <h1 className="text-3xl font-bold mb-6">
             {modoEdicao ? "Editar" : "Criar nova"}{" "}
             <span className="text-pink-500">trilha</span>
