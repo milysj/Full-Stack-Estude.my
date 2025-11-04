@@ -3,6 +3,7 @@ import {
   salvarResultado,
   salvarResposta,
   verificarProgresso,
+  obterProgressoTrilha,
   obterDadosUsuario,
 } from "../controllers/progressoController.js";
 import { verificarToken } from "../middlewares/authMiddleware.js";
@@ -73,6 +74,28 @@ router.post("/salvar-resposta", verificarToken, salvarResposta);
  *         description: Token ausente ou inválido
  */
 router.get("/verificar/:faseId", verificarToken, verificarProgresso);
+
+/**
+ * @swagger
+ * /api/progresso/trilha/{trilhaId}:
+ *   get:
+ *     summary: Obtém o progresso de todas as fases de uma trilha
+ *     tags: [Progresso]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trilhaId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Progresso das fases retornado com sucesso
+ *       401:
+ *         description: Token ausente ou inválido
+ */
+router.get("/trilha/:trilhaId", verificarToken, obterProgressoTrilha);
 
 /**
  * @swagger

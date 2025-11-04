@@ -2,45 +2,66 @@ import Progresso from "../models/progresso.js";
 import User from "../models/user.js";
 import Fase from "../models/fase.js";
 
-// Função para calcular XP ganho baseado na porcentagem de acertos
-// 100% = 500 XP, 0% = 0 XP (progressão linear)
+// URL do microsserviço SCORE
+const SCORE_SERVICE_URL = process.env.SCORE_SERVICE_URL || "http://localhost:5001";
+
+/**
+ * Função helper para calcular XP (mantida para compatibilidade)
+ * A lógica real está no microsserviço SCORE
+ */
 const calcularXP = (porcentagemAcertos) => {
   return Math.round((porcentagemAcertos / 100) * 500);
 };
 
-// Função para calcular nível baseado em XP total
-// Nível 1: precisa de 100 XP total (0-100)
-// Nível 2: precisa de 210 XP total (100-210)
-// Nível 3: precisa de 441 XP total (210-441)
-// Fórmula: nível N precisa de XP_total = XP_nível_anterior + (XP_nível_anterior * 0.1) + 100
-const calcularNivel = (xpTotal) => {
-  if (xpTotal < 0) xpTotal = 0;
-  
-  let nivel = 1;
-  let xpParaProximoNivel = 100; // XP necessário para passar do nível 1 ao 2
-  let xpAcumuladoAteNivelAtual = 0; // XP total acumulado até alcançar o nível atual
+/**
+ * Função helper para chamar o microsserviço SCORE
+ * Retorna null se o serviço não estiver disponível (não lança erro)
+ */
+const chamarScoreService = async (endpoint, method = "GET", body = null, token = null) => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
 
-  // Para alcançar o nível 1: precisa de 0 XP (já está no nível 1)
-  // Para alcançar o nível 2: precisa de 100 XP total
-  // Para alcançar o nível 3: precisa de 210 XP total (100 + 100*1.1)
-  // Para alcançar o nível 4: precisa de 441 XP total (210 + 210*1.1)
+    const options = {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+    };
 
-  // Calcular qual nível o usuário alcançou
-  while (xpTotal >= xpAcumuladoAteNivelAtual + xpParaProximoNivel) {
-    xpAcumuladoAteNivelAtual += xpParaProximoNivel;
-    xpParaProximoNivel = Math.round(100 + xpParaProximoNivel * 1.1);
-    nivel++;
+    if (token) {
+      // Se o token já contém "Bearer ", usar diretamente, senão adicionar
+      if (token.startsWith("Bearer ")) {
+        options.headers.Authorization = token;
+      } else {
+        options.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    if (body && (method === "POST" || method === "PUT" || method === "PATCH")) {
+      options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${SCORE_SERVICE_URL}${endpoint}`, options);
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[SCORE Service] Erro HTTP ${response.status} em ${endpoint}:`, errorText);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    // Não lançar erro, apenas logar e retornar null
+    if (error.name === "AbortError" || error.code === "ECONNREFUSED" || error.message.includes("fetch failed")) {
+      console.warn(`[SCORE Service] Microsserviço não disponível (${SCORE_SERVICE_URL}). Sistema continuará funcionando sem atualização de XP.`);
+    } else {
+      console.error(`[SCORE Service] Erro ao chamar ${endpoint}:`, error.message);
+    }
+    return null;
   }
-
-  // xpAtual é o XP que o usuário tem no nível atual
-  const xpAtual = xpTotal - xpAcumuladoAteNivelAtual;
-
-  return {
-    nivel,
-    xpAtual,
-    xpNecessario: xpParaProximoNivel,
-    xpAcumulado: xpAcumuladoAteNivelAtual,
-  };
 };
 
 // Salvar resultado de uma fase completada
@@ -105,15 +126,36 @@ export const salvarResultado = async (req, res) => {
       });
     }
 
-    // Atualizar XP total do usuário
-    const usuario = await User.findById(userId);
-    if (usuario) {
-      usuario.xpTotal = (usuario.xpTotal || 0) + xpGanho;
-      await usuario.save();
+    // Chamar microsserviço SCORE para adicionar XP
+    const authHeader = req.headers.authorization;
+    const scoreData = await chamarScoreService(
+      "/api/score/adicionar-xp",
+      "POST",
+      { xpGanho },
+      authHeader
+    );
+
+    // Buscar dados atualizados do score do usuário
+    let dadosNivel = null;
+    if (scoreData && scoreData.score) {
+      dadosNivel = {
+        nivel: scoreData.score.nivel,
+        xpAtual: scoreData.score.xpAtual,
+        xpNecessario: scoreData.score.xpNecessario,
+        xpAcumulado: scoreData.score.xpAcumulado,
+      };
+    } else {
+      // Se o microsserviço não estiver disponível, usar valores padrão
+      dadosNivel = {
+        nivel: 1,
+        xpAtual: 0,
+        xpNecessario: 100,
+        xpAcumulado: 0,
+      };
     }
 
-    // Calcular novo nível do usuário
-    const dadosNivel = calcularNivel(usuario.xpTotal);
+    // Buscar dados do usuário para resposta
+    const usuario = await User.findById(userId).select("-senha");
 
     res.status(201).json({
       message: "Resultado salvo com sucesso",
@@ -121,8 +163,8 @@ export const salvarResultado = async (req, res) => {
       xpGanho,
       nivel: dadosNivel,
       usuario: {
-        xpTotal: usuario.xpTotal,
-        nivel: dadosNivel.nivel,
+        xpTotal: scoreData?.score?.xpTotal || 0,
+        nivel: dadosNivel?.nivel || 1,
       },
     });
   } catch (error) {
@@ -285,6 +327,40 @@ export const verificarProgresso = async (req, res) => {
   }
 };
 
+// Obter progresso de todas as fases de uma trilha
+export const obterProgressoTrilha = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { trilhaId } = req.params;
+
+    if (!trilhaId) {
+      return res.status(400).json({ message: "trilhaId é obrigatório" });
+    }
+
+    // Buscar todos os progressos do usuário para esta trilha
+    const progressos = await Progresso.find({
+      userId,
+      trilhaId,
+    }).select("faseId concluido");
+
+    // Criar um mapa de faseId -> completado
+    const progressoMap = {};
+    progressos.forEach((progresso) => {
+      progressoMap[progresso.faseId.toString()] = progresso.concluido || false;
+    });
+
+    res.json({
+      progresso: progressoMap,
+    });
+  } catch (error) {
+    console.error("Erro ao obter progresso da trilha:", error);
+    res.status(500).json({ 
+      message: "Erro ao obter progresso da trilha", 
+      error: error.message 
+    });
+  }
+};
+
 // Obter dados do usuário com nível calculado
 export const obterDadosUsuario = async (req, res) => {
   try {
@@ -295,7 +371,20 @@ export const obterDadosUsuario = async (req, res) => {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
 
-    const dadosNivel = calcularNivel(usuario.xpTotal || 0);
+    // Buscar dados de score do microsserviço SCORE
+    const authHeader = req.headers.authorization;
+    let scoreData = await chamarScoreService("/api/score/usuario", "GET", null, authHeader);
+
+    // Retornar valores padrão se o microsserviço não estiver disponível
+    if (!scoreData) {
+      scoreData = {
+        xpTotal: 0,
+        nivel: 1,
+        xpAtual: 0,
+        xpNecessario: 100,
+        xpAcumulado: 0,
+      };
+    }
 
     res.json({
       usuario: {
@@ -306,12 +395,12 @@ export const obterDadosUsuario = async (req, res) => {
         personagem: usuario.personagem,
         fotoPerfil: usuario.fotoPerfil,
         materiaFavorita: usuario.materiaFavorita,
-        xpTotal: usuario.xpTotal || 0,
+        xpTotal: scoreData.xpTotal || 0,
       },
-      nivel: dadosNivel.nivel,
-      xpAtual: dadosNivel.xpAtual,
-      xpNecessario: dadosNivel.xpNecessario,
-      xpAcumulado: dadosNivel.xpAcumulado,
+      nivel: scoreData.nivel || 1,
+      xpAtual: scoreData.xpAtual || 0,
+      xpNecessario: scoreData.xpNecessario || 100,
+      xpAcumulado: scoreData.xpAcumulado || 0,
     });
   } catch (error) {
     console.error("Erro ao obter dados do usuário:", error);
@@ -319,6 +408,6 @@ export const obterDadosUsuario = async (req, res) => {
   }
 };
 
-// Exportar função de cálculo de nível para uso em outros lugares
-export { calcularNivel, calcularXP };
+// Exportar função de cálculo de XP (mantida para compatibilidade)
+export { calcularXP };
 

@@ -1,7 +1,60 @@
 import Progresso from "../models/progresso.js";
 import User from "../models/user.js";
 import mongoose from "mongoose";
-import { calcularNivel } from "./progressoController.js";
+
+// URL do microsserviço SCORE
+const SCORE_SERVICE_URL = process.env.SCORE_SERVICE_URL || "http://localhost:5001";
+
+/**
+ * Função helper para chamar o microsserviço SCORE
+ * Retorna null se o serviço não estiver disponível (não lança erro)
+ */
+const chamarScoreService = async (endpoint, method = "GET", body = null, token = null) => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
+
+    const options = {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+    };
+
+    if (token) {
+      // Se o token já contém "Bearer ", usar diretamente, senão adicionar
+      if (token.startsWith("Bearer ")) {
+        options.headers.Authorization = token;
+      } else {
+        options.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    if (body && (method === "POST" || method === "PUT" || method === "PATCH")) {
+      options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${SCORE_SERVICE_URL}${endpoint}`, options);
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[SCORE Service] Erro HTTP ${response.status} em ${endpoint}:`, errorText);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    // Não lançar erro, apenas logar e retornar null
+    if (error.name === "AbortError" || error.code === "ECONNREFUSED" || error.message.includes("fetch failed")) {
+      console.warn(`[SCORE Service] Microsserviço não disponível (${SCORE_SERVICE_URL}). Sistema continuará funcionando sem atualização de XP.`);
+    } else {
+      console.error(`[SCORE Service] Erro ao chamar ${endpoint}:`, error.message);
+    }
+    return null;
+  }
+};
 
 // Obter ranking de usuários baseado na média de acertos
 // Critério de desempate: quantidade total de acertos
@@ -109,29 +162,54 @@ export const obterRanking = async (req, res) => {
 // Obter ranking de usuários baseado no nível/XP
 export const obterRankingNivel = async (req, res) => {
   try {
-    // Buscar todos os usuários com XP
-    const usuarios = await User.find({
-      xpTotal: { $exists: true, $gte: 0 }
-    }).select("nome username personagem fotoPerfil xpTotal");
+    // Buscar todos os usuários (agora não filtramos por xpTotal, pois está no microsserviço)
+    const usuarios = await User.find({}).select("nome username personagem fotoPerfil");
 
-    // Calcular nível para cada usuário e ordenar
+    if (usuarios.length === 0) {
+      return res.json([]);
+    }
+
+    // Buscar scores de todos os usuários do microsserviço SCORE
+    const authHeader = req.headers.authorization;
+    const userIds = usuarios.map((u) => u._id.toString());
+    const scoresData = await chamarScoreService(
+      "/api/score/usuarios",
+      "POST",
+      { userIds },
+      authHeader
+    ) || [];
+
+    // Criar mapa de scores por userId
+    const scoresMap = new Map();
+    if (Array.isArray(scoresData)) {
+      scoresData.forEach((score) => {
+        scoresMap.set(score.userId.toString(), score);
+      });
+    }
+
+    // Combinar dados de usuários com scores
     const rankingComNivel = usuarios
       .map((usuario) => {
-        const xpTotal = usuario.xpTotal || 0;
-        const dadosNivel = calcularNivel(xpTotal);
-        
+        const score = scoresMap.get(usuario._id.toString()) || {
+          xpTotal: 0,
+          nivel: 1,
+          xpAtual: 0,
+          xpNecessario: 100,
+        };
+
         return {
           _id: usuario._id ? usuario._id.toString() : null,
           name: usuario.username || usuario.nome || "Usuário",
           initial: (usuario.username || usuario.nome || "U").charAt(0).toUpperCase(),
           personagem: usuario.personagem || "",
           fotoPerfil: usuario.fotoPerfil || "",
-          xpTotal: xpTotal,
-          nivel: dadosNivel.nivel,
-          xpAtual: dadosNivel.xpAtual,
-          xpNecessario: dadosNivel.xpNecessario,
+          xpTotal: score.xpTotal || 0,
+          nivel: score.nivel || 1,
+          xpAtual: score.xpAtual || 0,
+          xpNecessario: score.xpNecessario || 100,
         };
       })
+      .filter((item) => item.xpTotal > 0) // Filtrar apenas usuários com XP
       .sort((a, b) => {
         // Ordenar por nível (desc), depois por XP total (desc)
         if (b.nivel !== a.nivel) {
