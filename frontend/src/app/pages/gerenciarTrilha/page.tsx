@@ -36,7 +36,7 @@ export default function CriarTrilhaPage() {
                         <Topo/>
 
                         {/* Área de conteúdo principal: Criar trilha */}
-                        <div className="flex flex-6">
+                        <div className="flex flex-6 justify-center items-center mx-auto">
                             <CriarTrilha/>
                         </div>
 

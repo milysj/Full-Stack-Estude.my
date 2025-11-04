@@ -78,12 +78,15 @@ header .user-img {
     color: #fff; /* Texto branco */
     font-weight: bold; /* Negrito */
     font-size: 16px;
-    padding: 20px;
+    padding: 12px 16px; /* Padding reduzido e responsivo */
     border: none;
     border-radius: 10px; /* Bordas arredondadas */
     box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3); /* Sombra */
     cursor: pointer;
     text-transform: uppercase; /* Texto em maiúsculas */
+    box-sizing: border-box; /* Garante que padding não cause overflow */
+    max-width: 100%; /* Previne overflow horizontal */
+    overflow: hidden; /* Previne conteúdo que ultrapassa */
 }
 
 /* Efeito hover dos botões */

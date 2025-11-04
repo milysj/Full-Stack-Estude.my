@@ -22,7 +22,12 @@ export const criarTrilha = async (req, res) => {
     });
 
     await trilha.save();
-    res.status(201).json(trilha);
+    
+    // Remover usuariosIniciaram do retorno
+    const trilhaResponse = trilha.toObject();
+    delete trilhaResponse.usuariosIniciaram;
+    
+    res.status(201).json(trilhaResponse);
   } catch (error) {
     console.error("Erro ao criar trilha:", error);
     res.status(500).json({ message: "Erro ao criar trilha" });
@@ -35,7 +40,9 @@ export const listarTrilhas = async (req, res) => {
     const userId = req.user?._id;
     if (!userId) return res.status(401).json({ message: "Usuário não autenticado" });
 
-    const trilhas = await Trilha.find({ usuario: userId }).sort({ createdAt: -1 });
+    const trilhas = await Trilha.find({ usuario: userId })
+      .select("-usuariosIniciaram") // Remove o campo usuariosIniciaram do retorno (o dono pode ver depois se precisar)
+      .sort({ createdAt: -1 });
     res.json(trilhas);
   } catch (error) {
     console.error("Erro ao listar trilhas:", error);
@@ -65,7 +72,11 @@ export const atualizarTrilha = async (req, res) => {
 
     if (!trilha) return res.status(404).json({ message: "Trilha não encontrada" });
 
-    res.json(trilha);
+    // Remover usuariosIniciaram do retorno
+    const trilhaResponse = trilha.toObject();
+    delete trilhaResponse.usuariosIniciaram;
+
+    res.json(trilhaResponse);
   } catch (error) {
     console.error("Erro ao atualizar trilha:", error);
     res.status(500).json({ message: "Erro ao atualizar trilha" });
@@ -93,6 +104,7 @@ export const trilhasNovidades = async (req, res) => {
   try {
     const userId = req.user._id;
     const trilhas = await Trilha.find({ usuariosIniciaram: { $ne: userId } })
+      .select("-usuariosIniciaram") // Remove o campo usuariosIniciaram do retorno
       .sort({ createdAt: -1 })
       .limit(10);
     res.json(trilhas);
@@ -106,6 +118,7 @@ export const trilhasNovidades = async (req, res) => {
 export const trilhasPopulares = async (req, res) => {
   try {
     const trilhas = await Trilha.find()
+      .select("-usuariosIniciaram") // Remove o campo usuariosIniciaram do retorno
       .sort({ visualizacoes: -1 })
       .limit(10);
     res.json(trilhas);
@@ -120,6 +133,7 @@ export const trilhasContinue = async (req, res) => {
   try {
     const userId = req.user._id;
     const trilhas = await Trilha.find({ usuariosIniciaram: userId })
+      .select("-usuariosIniciaram") // Remove o campo usuariosIniciaram do retorno
       .sort({ updatedAt: -1 })
       .limit(10);
     res.json(trilhas);
@@ -154,7 +168,11 @@ export const iniciarTrilha = async (req, res) => {
       await trilha.save();
     }
 
-    res.json({ message: "Trilha iniciada com sucesso", trilha });
+    // Remover usuariosIniciaram do retorno
+    const trilhaResponse = trilha.toObject();
+    delete trilhaResponse.usuariosIniciaram;
+
+    res.json({ message: "Trilha iniciada com sucesso", trilha: trilhaResponse });
   } catch (error) {
     console.error("Erro ao iniciar trilha:", error);
     res.status(500).json({ message: "Erro ao iniciar trilha" });

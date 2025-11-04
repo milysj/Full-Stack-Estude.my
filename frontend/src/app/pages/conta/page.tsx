@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import Conta from "@/app/components/Conta";   // Componente de informações da conta do usuário
 import Footer from "@/app/components/Footer"; // Componente do rodapé
 import Topo from "@/app/components/Topo";     // Componente do topo/navegação
-import ProtectedRoute from "@/app/components/ProtectedRoute";
 
 export default function ContaPage() {
   useLayoutEffect(() => {
@@ -12,7 +11,7 @@ export default function ContaPage() {
   }, []);
 
   return (
-    <ProtectedRoute>
+    <>
       {/* ===========================
           Container principal da página
           =========================== */}
@@ -44,6 +43,6 @@ export default function ContaPage() {
           </div>
         </div>
       </div>
-    </ProtectedRoute>
+    </>
   );
 }

@@ -117,6 +117,21 @@ export const loginUser = async (req, res) => {
   }
 };
 
+// Verificar se o token é válido (endpoint leve para verificação de autenticação)
+export const verificarAutenticacao = async (req, res) => {
+  try {
+    // Se chegou aqui, o middleware já validou o token
+    // Retornar apenas confirmação de autenticação
+    res.json({ 
+      authenticated: true,
+      userId: req.user._id 
+    });
+  } catch (error) {
+    console.error("Erro ao verificar autenticação:", error);
+    res.status(500).json({ message: "Erro ao verificar autenticação" });
+  }
+};
+
 // Buscar dados do usuário atual
 export const buscarMeusDados = async (req, res) => {
   try {

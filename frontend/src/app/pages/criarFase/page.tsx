@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, Suspense } from "react";
-import { Plus, Save, X } from "lucide-react";
+import { ArrowLeft, Plus, Save, X } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   buscarFasePorId,
   atualizarFase,
   criarFase,
 } from "@/app/services/faseService";
+import { Button } from "@/components/ui/button";
 
 interface Pergunta {
   id: number;
@@ -51,10 +52,6 @@ function CriarFaseContent() {
   // Carregar dados da trilha e fase
   useEffect(() => {
     const carregarDados = async () => {
-      const token = localStorage.getItem("token");
-      const API_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
       try {
         // Se não tiver trilhaId nos params, tentar do localStorage
         const trilhaIdFinal =
@@ -68,18 +65,10 @@ function CriarFaseContent() {
             return null;
           })();
 
+        // Não buscamos a trilha pois o endpoint GET /api/trilhas/:id não existe
+        // Apenas armazenamos o ID para uso posterior
         if (trilhaIdFinal) {
-          // Buscar trilha
-          const trilhaRes = await fetch(
-            `${API_URL}/api/trilhas/${trilhaIdFinal}`,
-            {
-              headers: token ? { Authorization: `Bearer ${token}` } : {},
-            }
-          );
-          if (trilhaRes.ok) {
-            const trilhaData = await trilhaRes.json();
-            setTrilha(trilhaData);
-          }
+          setTrilha({ _id: trilhaIdFinal });
         }
 
         // Se tiver faseId, carregar fase existente
@@ -97,7 +86,23 @@ function CriarFaseContent() {
           setDescricaoFase(faseData.descricao || "");
           setConteudoFase(faseData.conteudo || "");
           setOrdemFase(faseData.ordem || 1);
-          setPerguntas(faseData.perguntas || []);
+          // Garantir que todas as perguntas tenham um id único
+          const perguntasComId = (faseData.perguntas || []).map(
+            (
+              pergunta: Partial<Pergunta> & { _id?: string | number },
+              index: number
+            ) => ({
+              id:
+                (pergunta.id as number) ||
+                (typeof pergunta._id === "number"
+                  ? pergunta._id
+                  : Date.now() + index),
+              enunciado: pergunta.enunciado || "",
+              alternativas: pergunta.alternativas || ["", "", "", ""],
+              respostaCorreta: pergunta.respostaCorreta ?? 0,
+            })
+          );
+          setPerguntas(perguntasComId);
         }
       } catch (error: unknown) {
         console.error("Erro ao carregar dados:", error);
@@ -224,31 +229,49 @@ function CriarFaseContent() {
   };
 
   if (loading) return <p className="p-6">Carregando dados...</p>;
-  if (!trilha && !trilhaId)
+
+  // Não bloquear se não tiver trilha, apenas avisar
+  if (!trilha && !trilhaId && !faseId) {
     return (
       <p className="p-6 text-red-500">Erro: Nenhuma trilha selecionada!</p>
     );
+  }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-      <h1 className="text-2xl font-bold mb-2">
-        {faseId ? "Editar Fase" : "Criar Nova Fase"}
-      </h1>
+    <div className="p-3 sm:p-4 md:p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold mb-2 break-words">
+            {faseId ? "Editar Fase" : "Criar Nova Fase"}
+          </h1>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className="flex items-center gap-2 w-full sm:w-auto shrink-0"
+          disabled={loading || salvando}
+        >
+          <ArrowLeft size={16} />
+          <span className="whitespace-nowrap">Voltar</span>
+        </Button>
+      </div>
       {(trilha || trilhaId) && (
-        <p className="text-gray-600 mb-6">
+        <p className="text-sm sm:text-base text-gray-600 mb-6 break-words">
           Trilha: {trilha?.titulo || `ID: ${trilhaId}`}
         </p>
       )}
 
       {erro && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="mb-4 p-2 sm:p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm sm:text-base">
           {erro}
         </div>
       )}
 
       {/* Informações da Fase */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
-        <h2 className="text-lg font-semibold mb-4">Informações da Fase</h2>
+      <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border">
+        <h2 className="text-base sm:text-lg font-semibold mb-4">
+          Informações da Fase
+        </h2>
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -259,7 +282,7 @@ function CriarFaseContent() {
               placeholder="Ex: Fase 1 - Introdução"
               value={tituloFase}
               onChange={(e) => setTituloFase(e.target.value)}
-              className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded p-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={salvando}
             />
           </div>
@@ -271,7 +294,7 @@ function CriarFaseContent() {
               placeholder="Descrição da fase (opcional)"
               value={descricaoFase}
               onChange={(e) => setDescricaoFase(e.target.value)}
-              className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded p-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={2}
               disabled={salvando}
             />
@@ -284,7 +307,7 @@ function CriarFaseContent() {
               placeholder="Adicione uma breve aula ou explicação sobre a matéria (opcional). Este conteúdo será exibido antes das perguntas."
               value={conteudoFase}
               onChange={(e) => setConteudoFase(e.target.value)}
-              className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded p-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={6}
               disabled={salvando}
             />
@@ -302,7 +325,7 @@ function CriarFaseContent() {
               min="1"
               value={ordemFase}
               onChange={(e) => setOrdemFase(parseInt(e.target.value) || 1)}
-              className="w-32 border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-32 border rounded p-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={salvando}
             />
           </div>
@@ -311,14 +334,15 @@ function CriarFaseContent() {
 
       {/* Perguntas */}
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Perguntas</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+          <h2 className="text-base sm:text-lg font-semibold">Perguntas</h2>
           <button
-            className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+            className="flex items-center gap-2 bg-blue-500 text-white px-3 sm:px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 text-sm sm:text-base w-full sm:w-auto"
             onClick={handleAddPergunta}
             disabled={salvando}
           >
-            <Plus size={16} /> Adicionar Pergunta
+            <Plus size={16} />{" "}
+            <span className="whitespace-nowrap">Adicionar Pergunta</span>
           </button>
         </div>
 
@@ -330,15 +354,19 @@ function CriarFaseContent() {
         )}
 
         {perguntas.map((p) => (
-          <div key={p.id} className="mb-4 p-4 border rounded bg-gray-50">
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="font-semibold text-gray-700">
+          <div
+            key={p.id}
+            className="mb-4 p-3 sm:p-4 border rounded bg-gray-50 w-full overflow-hidden"
+          >
+            <div className="flex justify-between items-start mb-3 gap-2">
+              <h3 className="font-semibold text-sm sm:text-base text-gray-700 break-words">
                 Pergunta {perguntas.indexOf(p) + 1}
               </h3>
               <button
                 onClick={() => handleRemovePergunta(p.id)}
-                className="text-red-600 hover:text-red-800"
+                className="text-red-600 hover:text-red-800 shrink-0"
                 disabled={salvando}
+                aria-label="Remover pergunta"
               >
                 <X size={18} />
               </button>
@@ -350,7 +378,7 @@ function CriarFaseContent() {
               onChange={(e) =>
                 handleChangePergunta(p.id, "enunciado", e.target.value)
               }
-              className="w-full border rounded p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded p-2 mb-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={salvando}
             />
 
@@ -359,7 +387,10 @@ function CriarFaseContent() {
                 Alternativas (selecione a correta):
               </label>
               {p.alternativas.map((alt, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div
+                  key={`${p.id}-alt-${i}`}
+                  className="flex items-center gap-2"
+                >
                   <input
                     type="radio"
                     name={`correta-${p.id}`}
@@ -382,7 +413,7 @@ function CriarFaseContent() {
                         i
                       )
                     }
-                    className="flex-1 border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 border rounded p-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
                     disabled={salvando}
                   />
                 </div>
@@ -393,9 +424,9 @@ function CriarFaseContent() {
       </div>
 
       {/* Botão Salvar */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
         <button
-          className="px-6 py-2 border rounded hover:bg-gray-100 flex items-center gap-2"
+          className="px-4 sm:px-6 py-2 border rounded hover:bg-gray-100 flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
           onClick={() => router.back()}
           disabled={salvando}
         >
@@ -403,7 +434,7 @@ function CriarFaseContent() {
           Voltar
         </button>
         <button
-          className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
+          className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 sm:px-6 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 text-sm sm:text-base w-full sm:w-auto"
           onClick={salvarFase}
           disabled={salvando || !tituloFase.trim()}
         >

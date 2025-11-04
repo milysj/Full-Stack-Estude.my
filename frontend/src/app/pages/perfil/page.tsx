@@ -7,7 +7,6 @@ import Link from "next/link";
 import Image from "next/image";
 import ExperienceBar from "@/app/components/ExperienceBar";
 import { useRouter } from "next/navigation";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
 
 interface UserData {
   usuario: {
@@ -38,11 +37,14 @@ export default function PerfilPage() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/pages/login");
+        if (!token || !isMounted) {
+          if (!token) router.push("/pages/login");
           return;
         }
 
@@ -53,11 +55,15 @@ export default function PerfilPage() {
         const [progressoRes, userRes] = await Promise.all([
           fetch(`${API_URL}/api/progresso/usuario`, {
             headers: { Authorization: `Bearer ${token}` },
+            signal: abortController.signal,
           }),
           fetch(`${API_URL}/api/users/me`, {
             headers: { Authorization: `Bearer ${token}` },
+            signal: abortController.signal,
           }),
         ]);
+
+        if (!isMounted) return;
 
         if (!progressoRes.ok || !userRes.ok) {
           if (progressoRes.status === 401 || userRes.status === 401) {
@@ -70,6 +76,8 @@ export default function PerfilPage() {
         const progressoData = await progressoRes.json();
         const userDataFull = await userRes.json();
 
+        if (!isMounted) return;
+
         // Mesclar dados
         setUserData({
           ...progressoData,
@@ -80,13 +88,22 @@ export default function PerfilPage() {
           },
         });
       } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        if (!isMounted) return;
         console.error("Erro ao buscar dados do usuário:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchUserData();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [router]);
 
   if (loading) {
@@ -117,86 +134,87 @@ export default function PerfilPage() {
   };
 
   return (
-    <ProtectedRoute>
-      <div
-        className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
-        style={{
-          backgroundImage: "url('/img/backgroundteste1.png')",
-          backgroundColor: "#f3f4f6",
-        }}
-      >
-        <div className="relative z-0">
-          <div className="flex flex-col min-h-screen">
-            <Topo />
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{
+        backgroundImage: "url('/img/backgroundteste1.png')",
+        backgroundColor: "#f3f4f6",
+      }}
+    >
+      <div className="relative z-0">
+        <div className="flex flex-col min-h-screen">
+          <Topo />
 
-            <div className="pt-3 w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 bg-white mt-4 mb-4">
-              {/* Imagem do personagem */}
-              <div className="text-3xl p-3 rounded-xl flex justify-center">
-                <Image
-                  className="mx-auto"
-                  src={
-                    userData.usuario.fotoPerfil ||
-                    getPersonagemImage(userData.usuario.personagem)
-                  }
-                  alt={`Imagem do personagem ${
-                    userData.usuario.personagem || "Personagem"
-                  }`}
-                  width={90}
-                  height={90}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = getPersonagemImage(
-                      userData.usuario.personagem
-                    );
-                  }}
-                />
-              </div>
+          {/* Container principal com centralização */}
+          <div className="flex-1 flex items-start justify-center px-2 sm:px-4 md:px-6 lg:px-20 py-4 sm:py-6 w-full overflow-x-hidden">
+            <div className="w-full max-w-6xl mx-auto my-auto min-w-0">
+              <div className="pt-3 sm:pt-4 md:pt-6 w-full bg-white rounded-lg shadow-md px-2 sm:px-4 md:px-6 lg:px-8 xl:px-12 overflow-hidden">
+                {/* Imagem do personagem */}
+                <div className="text-3xl p-3 rounded-xl flex justify-center">
+                  <Image
+                    className="mx-auto"
+                    src={
+                      userData.usuario.fotoPerfil ||
+                      getPersonagemImage(userData.usuario.personagem)
+                    }
+                    alt={`Imagem do personagem ${
+                      userData.usuario.personagem || "Personagem"
+                    }`}
+                    width={90}
+                    height={90}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = getPersonagemImage(
+                        userData.usuario.personagem
+                      );
+                    }}
+                  />
+                </div>
 
-              {/* Nome do personagem */}
-              <div className="character text-center mb-4">
-                <p className="font-bold text-lg md:text-xl">
-                  {userData.usuario.username ||
-                    userData.usuario.nome ||
-                    "Usuário"}
-                </p>
-                {userData.usuario.personagem && (
-                  <p className="text-sm text-gray-600">
-                    {userData.usuario.personagem}
+                {/* Nome do personagem */}
+                <div className="character text-center mb-4">
+                  <p className="font-bold text-lg md:text-xl">
+                    {userData.usuario.username ||
+                      userData.usuario.nome ||
+                      "Usuário"}
                   </p>
-                )}
-              </div>
+                  {userData.usuario.personagem && (
+                    <p className="text-sm text-gray-600">
+                      {userData.usuario.personagem}
+                    </p>
+                  )}
+                </div>
 
-              {/* Barra de Experiência */}
-              <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 mb-4">
-                <ExperienceBar
-                  currentLevel={userData.nivel}
-                  currentXp={userData.xpAtual}
-                  xpToNextLevel={userData.xpNecessario}
-                />
-              </div>
+                {/* Barra de Experiência */}
+                <div className="w-full mb-4">
+                  <ExperienceBar
+                    currentLevel={userData.nivel}
+                    currentXp={userData.xpAtual}
+                    xpToNextLevel={userData.xpNecessario}
+                  />
+                </div>
 
-              {/* Informações adicionais */}
-              <div className="text-center mb-4">
-                <p className="text-sm text-gray-600">
-                  XP Total: {userData.usuario.xpTotal || 0}
-                </p>
-              </div>
+                {/* Informações adicionais */}
+                <div className="text-center mb-4">
+                  <p className="text-sm text-gray-600">
+                    XP Total: {userData.usuario.xpTotal || 0}
+                  </p>
+                </div>
 
-              {/* Link para dados pessoais se não estiverem completos */}
-
-              {/* Botões de navegação do perfil */}
-              <div className="buttons-container flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-4 px-4">
-                <Link
-                  className="blue-btn w-full sm:w-auto text-center"
-                  href={"/pages/dadosPessoais"}
-                >
-                  DADOS PESSOAIS
-                </Link>
-                <Link
-                  className="blue-btn w-full sm:w-auto text-center"
-                  href={"/pages/conta"}
-                >
-                  CONTA
-                </Link>
+                {/* Botões de navegação do perfil */}
+                <div className="buttons-container flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center items-center mb-4 pb-4 px-2 sm:px-0 w-full overflow-hidden">
+                  <Link
+                    className="blue-btn w-full sm:w-auto text-center min-w-0 px-3 sm:px-4 md:px-5 lg:px-6 text-xs sm:text-sm md:text-base"
+                    href={"/pages/dadosPessoais"}
+                  >
+                    <span className="whitespace-nowrap">DADOS PESSOAIS</span>
+                  </Link>
+                  <Link
+                    className="blue-btn w-full sm:w-auto text-center min-w-0 px-3 sm:px-4 md:px-5 lg:px-6 text-xs sm:text-sm md:text-base"
+                    href={"/pages/conta"}
+                  >
+                    <span className="whitespace-nowrap">CONTA</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -204,6 +222,6 @@ export default function PerfilPage() {
           <Footer />
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }

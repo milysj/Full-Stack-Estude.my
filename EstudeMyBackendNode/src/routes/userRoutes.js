@@ -4,6 +4,7 @@ import {
   criarPerfil,
   loginUser,
   buscarMeusDados,
+  verificarAutenticacao,
   atualizarDadosPessoais,
   mudarSenha,
   solicitarRecuperacaoSenha,
@@ -85,6 +86,34 @@ router.post("/criarPerfil", verificarToken, upload.single("fotoPerfil"), criarPe
  *         description: Credenciais inválidas
  */
 router.post("/login", loginUser);
+
+/**
+ * @swagger
+ * /usuarios/verify:
+ *   get:
+ *     summary: Verifica se o token de autenticação é válido
+ *     description: Endpoint leve que apenas verifica se o usuário está autenticado, retornando apenas o status de autenticação
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token válido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 authenticated:
+ *                   type: boolean
+ *                   example: true
+ *                 userId:
+ *                   type: string
+ *                   example: "690228badcd0071298c67b70"
+ *       401:
+ *         description: Token ausente ou inválido
+ */
+router.get("/verify", verificarToken, verificarAutenticacao);
 
 /**
  * @swagger

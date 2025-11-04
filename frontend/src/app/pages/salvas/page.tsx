@@ -39,10 +39,13 @@ export default function MenuTrilhas() {
 
   // Carregar trilhas salvas
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const carregarTrilhasSalvas = async () => {
       const token = localStorage.getItem("token");
-      if (!token) {
-        setLoading(false);
+      if (!token || !isMounted) {
+        if (!token && isMounted) setLoading(false);
         return;
       }
 
@@ -51,24 +54,40 @@ export default function MenuTrilhas() {
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
         const res = await fetch(`${API_URL}/api/licoes-salvas`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: abortController.signal,
         });
+
+        if (!isMounted) return;
 
         if (res.ok) {
           const data = await res.json();
-          setTrilhasSalvas(Array.isArray(data) ? data : []);
+          if (isMounted) {
+            setTrilhasSalvas(Array.isArray(data) ? data : []);
+          }
         } else {
           console.error("Erro ao carregar trilhas salvas");
-          setTrilhasSalvas([]);
+          if (isMounted) {
+            setTrilhasSalvas([]);
+          }
         }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        if (!isMounted) return;
         console.error("Erro ao carregar trilhas salvas:", error);
         setTrilhasSalvas([]);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     carregarTrilhasSalvas();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, []);
 
   const handleTrilhaClick = (id: string) => {
