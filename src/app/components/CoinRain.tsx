@@ -6,6 +6,7 @@ import Image from "next/image";
 // ===============================
 // Número total de moedas que vão "cair"
 // ===============================
+
 const NUM_COINS = 20;
 
 // ===============================

@@ -25,6 +25,10 @@ export default function Home() {
   const [novidades, setNovidades] = useState<Trilha[]>([]);
   const [populares, setPopulares] = useState<Trilha[]>([]);
 
+  const [loadingContinue, setLoadingContinue] = useState(true);
+  const [loadingNovidades, setLoadingNovidades] = useState(true);
+  const [loadingPopulares, setLoadingPopulares] = useState(true);
+
   useLayoutEffect(() => {
     document.title = "Home - Estude.My";
   }, []);
@@ -38,71 +42,105 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
     const savedToken = localStorage.getItem("token");
 
     const requestInit: RequestInit = {
       headers: savedToken
         ? { Authorization: `Bearer ${savedToken}` }
         : undefined,
+      signal: abortController.signal,
     };
 
     // Função para buscar novidades
     const fetchNovidades = async () => {
+      if (isMounted) setLoadingNovidades(true);
       try {
         const res = await fetch(
           `${API_URL}/api/trilhas/novidades`,
           requestInit
         );
-        if (!res.ok) {
+        if (!res.ok || !isMounted) {
+          if (!isMounted) return;
           console.error("Erro ao buscar novidades:", await res.text());
           setNovidades([]);
+          setLoadingNovidades(false);
           return;
         }
         const data = await res.json();
-        setNovidades(Array.isArray(data) ? data : []);
+        if (isMounted) {
+          setNovidades(Array.isArray(data) ? data : []);
+          setLoadingNovidades(false);
+        }
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        if (!isMounted) return;
         console.error("Erro no fetch novidades:", err);
         setNovidades([]);
+        setLoadingNovidades(false);
       }
     };
 
     // Função para buscar populares
     const fetchPopulares = async () => {
+      if (isMounted) setLoadingPopulares(true);
       try {
         const res = await fetch(
           `${API_URL}/api/trilhas/populares`,
           requestInit
         );
-        if (!res.ok) {
+        if (!res.ok || !isMounted) {
+          if (!isMounted) return;
           console.error("Erro ao buscar populares:", await res.text());
           setPopulares([]);
+          setLoadingPopulares(false);
           return;
         }
         const data = await res.json();
-        setPopulares(Array.isArray(data) ? data : []);
+        if (isMounted) {
+          setPopulares(Array.isArray(data) ? data : []);
+          setLoadingPopulares(false);
+        }
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        if (!isMounted) return;
         console.error("Erro no fetch populares:", err);
         setPopulares([]);
+        setLoadingPopulares(false);
       }
     };
 
     // Função para buscar continue (trilhas do usuário) – só se houver token
     const fetchContinue = async () => {
-      if (!savedToken) return;
+      if (!savedToken) {
+        if (isMounted) setLoadingContinue(false);
+        return;
+      }
+      if (isMounted) setLoadingContinue(true);
       try {
         const res = await fetch(`${API_URL}/api/trilhas/continue`, {
           headers: { Authorization: `Bearer ${savedToken}` },
+          signal: abortController.signal,
         });
-        if (!res.ok) {
+        if (!res.ok || !isMounted) {
+          if (!isMounted) return;
           console.error("Erro ao buscar trilhas iniciadas:", await res.text());
           setContinueTrilhas([]);
+          setLoadingContinue(false);
           return;
         }
         const data = await res.json();
-        setContinueTrilhas(Array.isArray(data) ? data : []);
+        if (isMounted) {
+          setContinueTrilhas(Array.isArray(data) ? data : []);
+          setLoadingContinue(false);
+        }
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        if (!isMounted) return;
         console.error("Erro no fetch continue:", err);
         setContinueTrilhas([]);
+        setLoadingContinue(false);
       }
     };
 
@@ -112,7 +150,12 @@ export default function Home() {
     fetchContinue();
 
     // Guardar token no estado
-    if (savedToken) setToken(savedToken);
+    if (savedToken && isMounted) setToken(savedToken);
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, []);
   // Navegação e registro de visualização
   const handleTrilhaClick = (id: string) => {
@@ -122,7 +165,7 @@ export default function Home() {
         headers: { Authorization: `Bearer ${token}` },
       }).catch(console.error);
     }
-    
+
     // Redirecionar para a página da trilha com as fases
     window.location.href = `/pages/trilha?trilhaId=${id}`;
   };
@@ -151,15 +194,27 @@ export default function Home() {
           <Topo />
 
           <Section title="Continue" isMobile={isMobile}>
-            <Carrousel items={continueTrilhas} onClick={handleTrilhaClick} />
+            {loadingContinue ? (
+              <p className="text-gray-600 p-4 text-center">Carregando...</p>
+            ) : (
+              <Carrousel items={continueTrilhas} onClick={handleTrilhaClick} />
+            )}
           </Section>
 
           <Section title="Novidades" isMobile={isMobile}>
-            <Carrousel items={novidades} onClick={handleTrilhaClick} />
+            {loadingNovidades ? (
+              <p className="text-gray-600 p-4 text-center">Carregando...</p>
+            ) : (
+              <Carrousel items={novidades} onClick={handleTrilhaClick} />
+            )}
           </Section>
 
           <Section title="Melhores para você" isMobile={isMobile}>
-            <Carrousel items={populares} onClick={handleTrilhaClick} />
+            {loadingPopulares ? (
+              <p className="text-gray-600 p-4 text-center">Carregando...</p>
+            ) : (
+              <Carrousel items={populares} onClick={handleTrilhaClick} />
+            )}
           </Section>
         </div>
         <Footer />

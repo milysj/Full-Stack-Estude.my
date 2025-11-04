@@ -26,11 +26,14 @@ export default function DadosPessoais() {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const buscarDados = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/pages/login");
+        if (!token || !isMounted) {
+          if (!token) router.push("/pages/login");
           return;
         }
 
@@ -38,7 +41,10 @@ export default function DadosPessoais() {
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
         const res = await fetch(`${API_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: abortController.signal,
         });
+
+        if (!isMounted) return;
 
         if (!res.ok) {
           if (res.status === 401) {
@@ -49,24 +55,36 @@ export default function DadosPessoais() {
         }
 
         const data = await res.json();
-        setUserData(data);
-        setFormData({
-          nome: data.nome || "",
-          email: data.email || "",
-          dataNascimento: data.dataNascimento
-            ? new Date(data.dataNascimento).toISOString().split("T")[0]
-            : "",
-          telefone: data.telefone || "",
-          endereco: data.endereco || "",
-        });
+        
+        if (isMounted) {
+          setUserData(data);
+          setFormData({
+            nome: data.nome || "",
+            email: data.email || "",
+            dataNascimento: data.dataNascimento
+              ? new Date(data.dataNascimento).toISOString().split("T")[0]
+              : "",
+            telefone: data.telefone || "",
+            endereco: data.endereco || "",
+          });
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        if (!isMounted) return;
         console.error("Erro ao buscar dados:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     buscarDados();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [router]);
 
   const handleSalvar = async () => {

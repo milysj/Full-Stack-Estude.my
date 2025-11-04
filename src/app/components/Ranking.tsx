@@ -39,11 +39,14 @@ export default function Ranking() {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const carregarRanking = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/pages/login");
+        if (!token || !isMounted) {
+          if (!token) router.push("/pages/login");
           return;
         }
 
@@ -53,7 +56,10 @@ export default function Ranking() {
         // Carregar ranking de acertos
         const res = await fetch(`${API_URL}/api/ranking`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: abortController.signal,
         });
+
+        if (!isMounted) return;
 
         if (!res.ok) {
           if (res.status === 401) {
@@ -68,7 +74,10 @@ export default function Ranking() {
         // Carregar ranking de nível
         const resNivel = await fetch(`${API_URL}/api/ranking/nivel`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: abortController.signal,
         });
+
+        if (!isMounted) return;
 
         let dataNivel: UsuarioNivel[] = [];
         if (resNivel.ok) {
@@ -79,7 +88,11 @@ export default function Ranking() {
         try {
           const userRes = await fetch(`${API_URL}/api/users/me`, {
             headers: { Authorization: `Bearer ${token}` },
+            signal: abortController.signal,
           });
+          
+          if (!isMounted) return;
+
           if (userRes.ok) {
             const userData = await userRes.json();
 
@@ -90,7 +103,7 @@ export default function Ranking() {
                 userData._id &&
                 u._id.toString() === userData._id.toString()
             );
-            if (posicao !== -1) {
+            if (posicao !== -1 && isMounted) {
               setUsuarioPosicao(posicao + 1);
             }
 
@@ -101,13 +114,17 @@ export default function Ranking() {
                 userData._id &&
                 u._id.toString() === userData._id.toString()
             );
-            if (posicaoNivel !== -1) {
+            if (posicaoNivel !== -1 && isMounted) {
               setUsuarioPosicaoNivel(posicaoNivel + 1);
             }
           }
         } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') return;
+          if (!isMounted) return;
           console.error("Erro ao buscar dados do usuário:", error);
         }
+
+        if (!isMounted) return;
 
         const coloredData = data.map((user: Usuario) => {
           let color = "bg-gray-400";
@@ -127,16 +144,27 @@ export default function Ranking() {
           return { ...user, color };
         });
 
-        setRankingData(coloredData);
-        setRankingNivel(coloredDataNivel);
+        if (isMounted) {
+          setRankingData(coloredData);
+          setRankingNivel(coloredDataNivel);
+        }
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        if (!isMounted) return;
         console.error("Erro ao carregar ranking:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     carregarRanking();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [router]);
 
   if (loading) {
@@ -162,8 +190,8 @@ export default function Ranking() {
               >
                 {user.initial}
               </div>
-              <div className="h-20 sm:h-24 w-12 sm:w-16 bg-slate-300 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2">
-                <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center">
+              <div className="h-24 sm:h-24 w-12 sm:w-16 bg-slate-300 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2">
+                <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center mt-0">
                   {user.name}
                 </p>
                 <p className="text-[10px] sm:text-xs text-gray-600">#{user.position}</p>
@@ -180,8 +208,8 @@ export default function Ranking() {
               >
                 {user.initial}
               </div>
-              <div className="h-24 sm:h-28 w-12 sm:w-16 bg-yellow-400 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2">
-                <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center">
+              <div className="h-28 sm:h-28 w-12 sm:w-16 bg-yellow-400 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2">
+                <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center mt-0">
                   {user.name}
                 </p>
                 <p className="text-[10px] sm:text-xs text-gray-600">#{user.position}</p>
@@ -198,11 +226,11 @@ export default function Ranking() {
               >
                 {user.initial}
               </div>
-              <div className="h-16 sm:h-20 w-12 sm:w-16 bg-orange-400 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2 gap-0.5 sm:gap-1">
-                <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center">
+              <div className="h-20 sm:h-20 w-12 sm:w-16 bg-orange-400 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2 gap-0.5 sm:gap-1">
+                <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center mt-2">
                   {user.name}
                 </p>
-                <p className="text-[10px] sm:text-xs text-gray-600">#{user.position}</p>
+                <p className="text-[9px] sm:text-xs text-gray-600">#{user.position}</p>
               </div>
             </div>
           ))}
@@ -272,7 +300,7 @@ export default function Ranking() {
               >
                 {user.initial}
               </div>
-              <div className="h-20 sm:h-24 w-12 sm:w-16 bg-slate-300 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2">
+              <div className="h-24 sm:h-24 w-12 sm:w-16 bg-slate-300 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2">
                 <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center">
                   {user.name}
                 </p>
@@ -290,7 +318,7 @@ export default function Ranking() {
               >
                 {user.initial}
               </div>
-              <div className="h-24 sm:h-28 w-12 sm:w-16 bg-yellow-400 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2">
+              <div className="h-28 sm:h-28 w-12 sm:w-16 bg-yellow-400 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2">
                 <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center">
                   {user.name}
                 </p>
@@ -308,8 +336,8 @@ export default function Ranking() {
               >
                 {user.initial}
               </div>
-              <div className="h-16 sm:h-20 w-12 sm:w-16 bg-orange-400 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2 gap-0.5 sm:gap-1">
-                <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center">
+              <div className="h-20 sm:h-20 w-12 sm:w-16 bg-orange-400 rounded-t-lg flex items-center justify-center flex-col p-1 sm:p-2 gap-0.5 sm:gap-1">
+                <p className="text-[10px] sm:text-xs font-bold text-gray-800 truncate w-full text-center mt-2">
                   {user.name}
                 </p>
                 <p className="text-[10px] sm:text-xs text-gray-600">#{user.position}</p>

@@ -5,17 +5,20 @@ import React from "react";
 // ===============================
 const ConsultAi = () => {
   return (
-    <div className="flex items-center justify-center p-4 m-auto">
+    // Container principal com largura máxima, padding responsivo e borda arredondada
+    <div className="flex items-center justify-center px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-6 w-full">
       {/* ===============================
-          Card principal da conta
+          Card principal da ConsultAi
           =============================== */}
-      <div className="bg-white p-6 rounded shadow-md mx-auto">
+      <div className="bg-white p-4 sm:p-6 md:p-8 rounded shadow-md w-full max-w-4xl mx-auto">
         {/* ===============================
             Seção: Quem Somos
             =============================== */}
-        <section id="sobre" className="mb-6">
-          <h2 className="text-2xl font-semibold">Quem Somos</h2>
-          <p className="mx-25 text-xl">
+        <section id="sobre" className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 break-words">
+            Quem Somos
+          </h2>
+          <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed">
             A ConsultAi é uma startup de tecnologia criada na Faculdade de
             Tecnologia (FATEC). Nosso objetivo é desenvolver soluções de
             software inovadoras voltadas para beneficiar a comunidade,
@@ -26,17 +29,19 @@ const ConsultAi = () => {
         {/* ===============================
             Seção: Missão, Visão e Valores
             =============================== */}
-        <section id="missao" className="mb-6">
-          <h2 className="">Missão, Visão e Valores</h2>
-          <p className="mx-25 text-xl">
+        <section id="missao" className="mb-6 sm:mb-8 last:mb-0">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 break-words">
+            Missão, Visão e Valores
+          </h2>
+          <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed mb-3">
             <strong>Missão:</strong> Facilitar o acesso a soluções tecnológicas
             que promovam impacto social positivo.
           </p>
-          <p className="mx-25 text-xl">
+          <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed mb-3">
             <strong>Visão:</strong> Ser reconhecida como uma referência em
             tecnologia para a comunidade.
           </p>
-          <p className="mx-25 text-xl">
+          <p className="text-gray-700 text-sm sm:text-base break-words leading-relaxed">
             <strong>Valores:</strong> Inovação, Ética, Colaboração e Compromisso
             com o Social.
           </p>

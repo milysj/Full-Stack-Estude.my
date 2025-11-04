@@ -70,27 +70,47 @@ export default function GerenciarTrilha() {
   // ================== Funções CRUD ==================
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const fetchTrilhas = async () => {
       if (typeof window !== "undefined") {
         const token = localStorage.getItem("token");
-        if (!token) return;
+        if (!token || !isMounted) return;
 
         try {
           const response = await fetch(`${API_URL}/api/trilhas`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            signal: abortController.signal,
           });
 
+          if (!isMounted) return;
+
+          if (!response.ok) {
+            console.error("Erro ao carregar trilhas:", response.statusText);
+            return;
+          }
+
           const data = await response.json();
-          setTrilhas(data);
+          if (isMounted) {
+            setTrilhas(data);
+          }
         } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") return;
+          if (!isMounted) return;
           console.error("Erro ao carregar trilhas:", error);
         }
       }
     };
 
     fetchTrilhas();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, []);
 
   const handleChange = (
@@ -276,7 +296,7 @@ export default function GerenciarTrilha() {
 
   // ================== JSX ==================
   return (
-    <div className="flex flex-col items-center p-4 mx-auto w-full max-w-6xl">
+    <div className="flex flex-col items-center p-2 sm:p-4 mx-auto w-full max-w-6xl relative">
       {/* ================= Botão Criar Trilha ================= */}
       <button
         className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition mb-6 mx-auto"
@@ -350,240 +370,279 @@ export default function GerenciarTrilha() {
 
       {/* ================= Formulário de criação/edição ================= */}
       {mostrarFormulario && (
-        <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-3xl mb-8 overflow-x-auto mx-auto">
-          <h1 className="text-3xl font-bold mb-6">
-            {modoEdicao ? "Editar" : "Criar nova"}{" "}
-            <span className="text-pink-500">trilha</span>
-          </h1>
+        <>
+          {/* Overlay/Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 sm:hidden"
+            onClick={() => {
+              resetForm();
+              setMostrarFormulario(false);
+            }}
+          />
 
-          <div className="space-y-4">
-            {/* Título */}
-            <div>
-              <label className="block font-semibold mb-1">Nome da trilha</label>
-              <input
-                type="text"
-                name="titulo"
-                value={trilha.titulo}
-                onChange={handleChange}
-                placeholder="Título"
-                className="w-full border rounded px-3 py-2"
-              />
-              {erros.titulo && (
-                <p className="text-red-500 text-sm mt-1">{erros.titulo}</p>
-              )}
+          {/* Formulário */}
+          <div className="fixed inset-x-0 top-0 sm:relative sm:inset-auto bg-white p-3 sm:p-4 md:p-6 rounded shadow-lg w-full max-w-3xl mb-8 overflow-y-auto max-h-screen sm:max-h-none z-50 sm:z-auto mx-auto sm:shadow-md">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+                {modoEdicao ? "Editar" : "Criar nova"}{" "}
+                <span className="text-pink-500">trilha</span>
+              </h1>
+              {/* Botão de fechar no mobile */}
+              <button
+                onClick={() => {
+                  resetForm();
+                  setMostrarFormulario(false);
+                }}
+                className="sm:hidden text-gray-500 hover:text-gray-700 text-2xl font-bold leading-none"
+                aria-label="Fechar"
+              >
+                ×
+              </button>
             </div>
 
-            {/* Descrição */}
-            <div>
-              <label className="block font-semibold mb-1">Descrição</label>
-              <textarea
-                name="descricao"
-                value={trilha.descricao}
-                onChange={handleChange}
-                placeholder="Descrição"
-                className="w-full border rounded px-3 py-2 h-28 resize-none"
-              />
-              {erros.descricao && (
-                <p className="text-red-500 text-sm mt-1">{erros.descricao}</p>
-              )}
-            </div>
-
-            {/* Datas */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <label className="block font-semibold mb-1">
-                  Data de início
+            <div className="space-y-3 sm:space-y-4">
+              {/* Título */}
+              <div>
+                <label className="block font-semibold mb-1 text-sm sm:text-base">
+                  Nome da trilha
                 </label>
                 <input
-                  type="date"
-                  name="dataCriacao"
-                  value={trilha.dataCriacao}
+                  type="text"
+                  name="titulo"
+                  value={trilha.titulo}
                   onChange={handleChange}
-                  className="w-full border rounded px-3 py-2"
+                  placeholder="Título"
+                  className="w-full border rounded px-3 py-2 text-sm sm:text-base"
                 />
-              </div>
-              <div className="flex-1">
-                <label className="block font-semibold mb-1">
-                  Data de término (opcional)
-                </label>
-                <input
-                  type="date"
-                  name="dataTermino"
-                  value={trilha.dataTermino}
-                  onChange={handleChange}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-            </div>
-
-            {/* Matéria e dificuldade */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <label className="block font-semibold mb-1">Matéria</label>
-                <select
-                  name="materia"
-                  value={trilha.materia}
-                  onChange={handleChange}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="" disabled>
-                    Selecione uma matéria
-                  </option>
-                  {materias.map((m, i) => (
-                    <option key={i} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                {erros.materia && (
-                  <p className="text-red-500 text-sm mt-1">{erros.materia}</p>
+                {erros.titulo && (
+                  <p className="text-red-500 text-sm mt-1">{erros.titulo}</p>
                 )}
               </div>
-              <div className="flex-1">
-                <label className="block font-semibold mb-1">Dificuldade</label>
-                <select
-                  name="dificuldade"
-                  value={trilha.dificuldade}
+
+              {/* Descrição */}
+              <div>
+                <label className="block font-semibold mb-1 text-sm sm:text-base">
+                  Descrição
+                </label>
+                <textarea
+                  name="descricao"
+                  value={trilha.descricao}
                   onChange={handleChange}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="Facil">Fácil</option>
-                  <option value="Medio">Médio</option>
-                  <option value="Dificil">Difícil</option>
-                </select>
+                  placeholder="Descrição"
+                  className="w-full border rounded px-3 py-2 h-24 sm:h-28 resize-none text-sm sm:text-base"
+                />
+                {erros.descricao && (
+                  <p className="text-red-500 text-sm mt-1">{erros.descricao}</p>
+                )}
               </div>
-            </div>
 
-            {/* Disponibilidade e pagamento */}
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-20 justify-center sm:justify-start">
-              <div>
-                <p className="font-semibold mb-1">Disponibilidade</p>
-                <label className="mr-4">
+              {/* Datas */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block font-semibold mb-1 text-sm sm:text-base">
+                    Data de início
+                  </label>
                   <input
-                    type="radio"
-                    name="disponibilidade"
-                    value="Privado"
-                    checked={trilha.disponibilidade === "Privado"}
+                    type="date"
+                    name="dataCriacao"
+                    value={trilha.dataCriacao}
                     onChange={handleChange}
-                    className="mr-1"
-                  />{" "}
-                  Privado
-                </label>
-                <label>
+                    className="w-full border rounded px-3 py-2 text-sm sm:text-base"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block font-semibold mb-1 text-sm sm:text-base">
+                    Data de término (opcional)
+                  </label>
                   <input
-                    type="radio"
-                    name="disponibilidade"
-                    value="Aberto"
-                    checked={trilha.disponibilidade === "Aberto"}
+                    type="date"
+                    name="dataTermino"
+                    value={trilha.dataTermino}
                     onChange={handleChange}
-                    className="mr-1"
-                  />{" "}
-                  Aberto
-                </label>
+                    className="w-full border rounded px-3 py-2 text-sm sm:text-base"
+                  />
+                </div>
               </div>
-              <div>
-                <p className="font-semibold mb-1">Paga ou gratuita</p>
-                <label className="mr-4">
-                  <input
-                    type="radio"
-                    name="pagamento"
-                    value="Paga"
-                    checked={trilha.pagamento === "Paga"}
-                    onChange={handleChange}
-                    className="mr-1"
-                  />{" "}
-                  Paga
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="pagamento"
-                    value="Gratuita"
-                    checked={trilha.pagamento === "Gratuita"}
-                    onChange={handleChange}
-                    className="mr-1"
-                  />{" "}
-                  Gratuita
-                </label>
-              </div>
-            </div>
 
-            {/* Carrossel de fases */}
-            <div className="w-full">
-              <p className="font-semibold mb-2">Fases da trilha</p>
-              {erros.faseSelecionada && (
-                <p className="text-red-500 text-sm mb-2">
-                  {erros.faseSelecionada}
+              {/* Matéria e dificuldade */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block font-semibold mb-1 text-sm sm:text-base">
+                    Matéria
+                  </label>
+                  <select
+                    name="materia"
+                    value={trilha.materia}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2 text-sm sm:text-base"
+                  >
+                    <option value="" disabled>
+                      Selecione uma matéria
+                    </option>
+                    {materias.map((m, i) => (
+                      <option key={i} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  {erros.materia && (
+                    <p className="text-red-500 text-sm mt-1">{erros.materia}</p>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="block font-semibold mb-1 text-sm sm:text-base">
+                    Dificuldade
+                  </label>
+                  <select
+                    name="dificuldade"
+                    value={trilha.dificuldade}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2 text-sm sm:text-base"
+                  >
+                    <option value="Facil">Fácil</option>
+                    <option value="Medio">Médio</option>
+                    <option value="Dificil">Difícil</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Disponibilidade e pagamento */}
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-20 justify-center sm:justify-start">
+                <div>
+                  <p className="font-semibold mb-1 text-sm sm:text-base">
+                    Disponibilidade
+                  </p>
+                  <label className="mr-4">
+                    <input
+                      type="radio"
+                      name="disponibilidade"
+                      value="Privado"
+                      checked={trilha.disponibilidade === "Privado"}
+                      onChange={handleChange}
+                      className="mr-1"
+                    />{" "}
+                    Privado
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="disponibilidade"
+                      value="Aberto"
+                      checked={trilha.disponibilidade === "Aberto"}
+                      onChange={handleChange}
+                      className="mr-1"
+                    />{" "}
+                    Aberto
+                  </label>
+                </div>
+                <div>
+                  <p className="font-semibold mb-1 text-sm sm:text-base">
+                    Paga ou gratuita
+                  </p>
+                  <label className="mr-4">
+                    <input
+                      type="radio"
+                      name="pagamento"
+                      value="Paga"
+                      checked={trilha.pagamento === "Paga"}
+                      onChange={handleChange}
+                      className="mr-1"
+                    />{" "}
+                    Paga
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="pagamento"
+                      value="Gratuita"
+                      checked={trilha.pagamento === "Gratuita"}
+                      onChange={handleChange}
+                      className="mr-1"
+                    />{" "}
+                    Gratuita
+                  </label>
+                </div>
+              </div>
+
+              {/* Carrossel de fases */}
+              <div className="w-full">
+                <p className="font-semibold mb-2 text-sm sm:text-base">
+                  Fases da trilha
                 </p>
-              )}
-              <div className="flex overflow-x-auto gap-3 sm:gap-4 py-2 pb-3">
-                {fases.map((fase) => {
-                  const isSelected = trilha.faseSelecionada === fase.id;
-                  return (
-                    <div
-                      key={fase.id}
-                      onClick={() => handleFaseClick(fase.id)}
-                      className={`shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 border-4 rounded-xl overflow-hidden relative cursor-pointer transition-all duration-200 transform
+                {erros.faseSelecionada && (
+                  <p className="text-red-500 text-sm mb-2">
+                    {erros.faseSelecionada}
+                  </p>
+                )}
+                <div className="flex overflow-x-auto gap-3 sm:gap-4 py-2 pb-3">
+                  {fases.map((fase) => {
+                    const isSelected = trilha.faseSelecionada === fase.id;
+                    return (
+                      <div
+                        key={fase.id}
+                        onClick={() => handleFaseClick(fase.id)}
+                        className={`shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 border-4 rounded-xl overflow-hidden relative cursor-pointer transition-all duration-200 transform
                         ${
                           isSelected
                             ? "border-blue-600 shadow-lg scale-105"
                             : "border-gray-300 hover:scale-105 hover:shadow-md"
                         }`}
-                    >
-                      <img
-                        src={fase.img}
-                        alt={fase.nome}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-1 left-1 sm:top-2 sm:left-2 flex items-center gap-1 bg-black/50 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
-                        {fase.paga ? (
-                          <Lock size={12} className="sm:w-3.5 sm:h-3.5" />
-                        ) : (
-                          <Unlock size={12} className="sm:w-3.5 sm:h-3.5" />
+                      >
+                        <img
+                          src={fase.img}
+                          alt={fase.nome}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-1 left-1 sm:top-2 sm:left-2 flex items-center gap-1 bg-black/50 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
+                          {fase.paga ? (
+                            <Lock size={12} className="sm:w-3.5 sm:h-3.5" />
+                          ) : (
+                            <Unlock size={12} className="sm:w-3.5 sm:h-3.5" />
+                          )}
+                          <span className="hidden sm:inline">
+                            {fase.paga ? "Paga" : "Gratuita"}
+                          </span>
+                          <span className="sm:hidden">
+                            {fase.paga ? "P" : "G"}
+                          </span>
+                        </div>
+                        <div className="absolute bottom-0 w-full bg-black/40 text-white text-center py-0.5 sm:py-1 text-xs sm:text-sm">
+                          {fase.nome}
+                        </div>
+                        {isSelected && (
+                          <span className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-blue-600 text-white text-[8px] sm:text-[10px] font-bold px-1 sm:px-2 py-0.5 rounded shadow-md">
+                            ✓
+                          </span>
                         )}
-                        <span className="hidden sm:inline">
-                          {fase.paga ? "Paga" : "Gratuita"}
-                        </span>
-                        <span className="sm:hidden">
-                          {fase.paga ? "P" : "G"}
-                        </span>
                       </div>
-                      <div className="absolute bottom-0 w-full bg-black/40 text-white text-center py-0.5 sm:py-1 text-xs sm:text-sm">
-                        {fase.nome}
-                      </div>
-                      {isSelected && (
-                        <span className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-blue-600 text-white text-[8px] sm:text-[10px] font-bold px-1 sm:px-2 py-0.5 rounded shadow-md">
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Botões Salvar / Cancelar */}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 mt-4 mb-2 sm:mb-0">
+                <button
+                  type="button"
+                  className="bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded hover:bg-blue-700 transition w-full sm:w-auto min-w-0 sm:min-w-[100px] text-sm sm:text-base"
+                  onClick={salvarTrilha}
+                >
+                  {modoEdicao ? "Atualizar" : "Salvar"}
+                </button>
+                <button
+                  type="button"
+                  className="bg-gray-500 text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded hover:bg-gray-600 transition w-full sm:w-auto min-w-0 sm:min-w-[100px] text-sm sm:text-base"
+                  onClick={() => {
+                    resetForm();
+                    setMostrarFormulario(false);
+                  }}
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
-
-            {/* Botões Salvar / Cancelar */}
-            <div className="flex flex-wrap gap-3 sm:gap-4 mt-4">
-              <button
-                type="button"
-                className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded hover:bg-blue-700 transition flex-1 sm:flex-none min-w-[100px]"
-                onClick={salvarTrilha}
-              >
-                {modoEdicao ? "Atualizar" : "Salvar"}
-              </button>
-              <button
-                type="button"
-                className="bg-gray-500 text-white px-4 sm:px-6 py-2 rounded hover:bg-gray-600 transition flex-1 sm:flex-none min-w-[100px]"
-                onClick={() => {
-                  resetForm();
-                  setMostrarFormulario(false);
-                }}
-              >
-                Cancelar
-              </button>
-            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

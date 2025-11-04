@@ -27,11 +27,14 @@ export default function MinhaConta() {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const buscarDados = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/pages/login");
+        if (!token || !isMounted) {
+          if (!token) router.push("/pages/login");
           return;
         }
 
@@ -39,7 +42,10 @@ export default function MinhaConta() {
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
         const res = await fetch(`${API_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: abortController.signal,
         });
+
+        if (!isMounted) return;
 
         if (!res.ok) {
           if (res.status === 401) {
@@ -50,15 +56,27 @@ export default function MinhaConta() {
         }
 
         const data = await res.json();
-        setUserData(data);
+        
+        if (isMounted) {
+          setUserData(data);
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        if (!isMounted) return;
         console.error("Erro ao buscar dados:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     buscarDados();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [router]);
 
   const handleSair = () => {
