@@ -23,10 +23,14 @@ function TooltipDescricao({
   fase,
   onStart,
   isLocked,
+  isCompletada,
+  mensagemBloqueio,
 }: {
   fase: Fase;
   onStart: () => void;
   isLocked: boolean;
+  isCompletada?: boolean;
+  mensagemBloqueio?: string;
 }) {
   return (
     <motion.div
@@ -42,6 +46,16 @@ function TooltipDescricao({
       <p className="text-xs opacity-75 mb-3">
         {fase.descricao || "Sem descrição"}
       </p>
+      {isCompletada && (
+        <p className="text-xs opacity-90 mb-2 text-green-200 font-semibold">
+          ✓ Fase concluída!
+        </p>
+      )}
+      {isLocked && mensagemBloqueio && (
+        <p className="text-xs opacity-90 mb-2 text-yellow-200 italic">
+          {mensagemBloqueio}
+        </p>
+      )}
       <button
         onClick={!isLocked ? onStart : undefined}
         disabled={isLocked}
@@ -49,10 +63,16 @@ function TooltipDescricao({
           ${
             isLocked
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : isCompletada
+              ? "bg-green-400 text-white hover:scale-105 active:scale-95"
               : "bg-white text-blue-500 hover:scale-105 active:scale-95"
           }`}
       >
-        {isLocked ? "BLOQUEADO" : "COMEÇAR +10 XP"}
+        {isLocked 
+          ? "BLOQUEADO" 
+          : isCompletada 
+          ? "REVISAR FASE ✓" 
+          : "COMEÇAR"}
       </button>
     </motion.div>
   );
@@ -68,6 +88,7 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [trilhaSalva, setTrilhaSalva] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [progressoFases, setProgressoFases] = useState<Map<string, boolean>>(new Map());
 
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const tracksRef = useRef<HTMLDivElement | null>(null);
@@ -82,6 +103,9 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
       return;
     }
 
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const carregarDados = async () => {
       try {
         // Buscar informações da trilha
@@ -90,36 +114,51 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
         // Verificar se a trilha está salva ANTES de carregar outros dados
-        if (token && trilhaId) {
+        if (token && trilhaId && isMounted) {
           try {
             const salvaRes = await fetch(
               `${API_URL}/api/licoes-salvas/verificar/${trilhaId}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
+                signal: abortController.signal,
               }
             );
+            if (!isMounted) return;
+            
             if (salvaRes.ok) {
               const { salva } = await salvaRes.json();
-              console.log("Status da trilha (salva?):", salva);
-              // Atualizar estado imediatamente
-              setTrilhaSalva(!!salva);
+              if (isMounted) {
+                setTrilhaSalva(!!salva);
+              }
             } else {
-              console.warn("Erro ao verificar status da trilha:", salvaRes.status);
-              setTrilhaSalva(false);
+              if (isMounted) {
+                setTrilhaSalva(false);
+              }
             }
           } catch (error) {
+            if (error instanceof Error && error.name === "AbortError") return;
+            if (!isMounted) return;
             console.error("Erro ao verificar se trilha está salva:", error);
-            setTrilhaSalva(false);
+            if (isMounted) {
+              setTrilhaSalva(false);
+            }
           }
         }
 
+        if (!isMounted) return;
+
         const trilhaRes = await fetch(`${API_URL}/api/trilhas/${trilhaId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal: abortController.signal,
         });
+
+        if (!isMounted) return;
 
         if (trilhaRes.ok) {
           const trilhaData = await trilhaRes.json();
-          setTrilha(trilhaData);
+          if (isMounted) {
+            setTrilha(trilhaData);
+          }
         }
 
         // Buscar fases
@@ -128,14 +167,66 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
           (a: Fase, b: Fase) => a.ordem - b.ordem
         );
         setFases(fasesOrdenadas);
+
+        // Buscar progresso de todas as fases de uma vez (otimizado)
+        if (token && fasesOrdenadas.length > 0 && isMounted) {
+          try {
+            const progressoRes = await fetch(
+              `${API_URL}/api/progresso/trilha/${trilhaId}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: abortController.signal,
+              }
+            );
+            
+            if (!isMounted) return;
+            
+            if (progressoRes.ok) {
+              const progressoData = await progressoRes.json();
+              const progressoMap = new Map<string, boolean>();
+              
+              // Converter o objeto de progresso em Map
+              if (progressoData.progresso) {
+                Object.entries(progressoData.progresso).forEach(([faseId, completado]) => {
+                  progressoMap.set(faseId, completado === true);
+                });
+              }
+              
+              if (isMounted) {
+                setProgressoFases(progressoMap);
+              }
+            } else {
+              // Se falhar, criar Map vazio
+              if (isMounted) {
+                setProgressoFases(new Map());
+              }
+            }
+          } catch (error) {
+            if (error instanceof Error && error.name === "AbortError") return;
+            if (!isMounted) return;
+            console.error("Erro ao buscar progresso da trilha:", error);
+            if (isMounted) {
+              setProgressoFases(new Map());
+            }
+          }
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        if (!isMounted) return;
         console.error("Erro ao carregar fases:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     carregarDados();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [trilhaId]);
 
   // Função para mover o personagem
@@ -179,12 +270,51 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
     setCharacterPos({ x, y });
   };
 
-  // Posição inicial no primeiro botão quando fases carregarem
+  // Posição inicial: mover para a primeira fase quando fases carregarem
   useLayoutEffect(() => {
     if (fases.length > 0) {
+      // Mover imediatamente para a primeira fase enquanto espera o progresso
       moveCharacter(0);
     }
-  }, [fases]);
+  }, [fases.length]);
+
+  // Atualizar posição quando o progresso for carregado
+  useEffect(() => {
+    if (fases.length === 0) return;
+
+    // Usar requestAnimationFrame para garantir que o DOM está atualizado
+    const rafId = requestAnimationFrame(() => {
+      // Aguardar um pouco para garantir que os botões estão renderizados
+      setTimeout(async () => {
+        // Se tem progresso carregado, calcular baseado nele
+        if (progressoFases.size > 0) {
+          // Encontrar a última fase concluída em sequência
+          let ultimaFaseConcluidaIndex = -1;
+          
+          for (let i = 0; i < fases.length; i++) {
+            const faseCompletada = progressoFases.get(fases[i]._id);
+            if (faseCompletada) {
+              ultimaFaseConcluidaIndex = i;
+            } else {
+              // Se encontrou uma fase não concluída, para aqui
+              break;
+            }
+          }
+          
+          // Mover para a próxima fase disponível (última concluída + 1)
+          const faseAtualIndex = ultimaFaseConcluidaIndex + 1;
+          
+          // Se todas as fases foram concluídas, ficar na última
+          const indexFinal = faseAtualIndex >= fases.length ? fases.length - 1 : faseAtualIndex;
+          
+          await moveCharacter(indexFinal);
+        }
+        // Se não tem progresso, já está na primeira fase (movido pelo useLayoutEffect)
+      }, 50); // Delay reduzido para resposta mais rápida
+    });
+    
+    return () => cancelAnimationFrame(rafId);
+  }, [progressoFases.size, fases.length]);
 
   // Mostrar botão voltar ao topo
   useEffect(() => {
@@ -194,6 +324,60 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Atualizar progresso quando a página ganha foco (usuário volta após completar fase)
+  useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    const handleFocus = async () => {
+      if (!trilhaId || fases.length === 0 || !isMounted) return;
+      
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+      try {
+        const progressoRes = await fetch(
+          `${API_URL}/api/progresso/trilha/${trilhaId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: abortController.signal,
+          }
+        );
+
+        if (!isMounted) return;
+
+        if (progressoRes.ok) {
+          const progressoData = await progressoRes.json();
+          const progressoMap = new Map<string, boolean>();
+          
+          // Converter o objeto de progresso em Map
+          if (progressoData.progresso) {
+            Object.entries(progressoData.progresso).forEach(([faseId, completado]) => {
+              progressoMap.set(faseId, completado === true);
+            });
+          }
+          
+          if (isMounted) {
+            setProgressoFases(progressoMap);
+          }
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        if (!isMounted) return;
+        console.error("Erro ao atualizar progresso:", error);
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      isMounted = false;
+      abortController.abort();
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [trilhaId, fases]);
 
   const handleButtonClick = (index: number) => {
     setTooltipIndex(index);
@@ -452,8 +636,16 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
           </AnimatePresence>
 
           {fases.map((fase, index) => {
-            // Fases bloqueadas após as primeiras 3 (ou pode usar lógica de progresso)
-            const isLocked = index >= 3; // Pode ajustar essa lógica conforme necessário
+            // Lógica de bloqueio progressivo:
+            // - A primeira fase (index 0) sempre está desbloqueada
+            // - Uma fase só é desbloqueada se a fase anterior estiver concluída
+            const faseAnterior = index > 0 ? fases[index - 1] : null;
+            const faseAnteriorCompletada = faseAnterior 
+              ? progressoFases.get(faseAnterior._id) || false
+              : true; // Se não há fase anterior, considera como concluída (desbloqueia a primeira)
+            
+            const isLocked = index > 0 && !faseAnteriorCompletada;
+            const isCompletada = progressoFases.get(fase._id) || false;
             const isLeft = index % 2 === 0;
 
             return (
@@ -474,10 +666,13 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
                       transition-all duration-150 ${
                         isLocked
                           ? "bg-blue-500 text-gray-400 opacity-50 cursor-pointer"
+                          : isCompletada
+                          ? "bg-green-500 text-yellow-300 hover:scale-105 ring-2 ring-green-300"
                           : "bg-blue-500 text-yellow-300 hover:scale-105"
                       }`}
+                    title={isCompletada ? "Fase concluída ✓" : isLocked ? "Fase bloqueada" : "Fase disponível"}
                   >
-                    ★
+                    {isCompletada ? "✓" : "★"}
                   </button>
 
                   {tooltipIndex === index && (
@@ -485,6 +680,12 @@ export default function Trilhas({ trilhaId }: TrilhasProps) {
                       fase={fase}
                       onStart={() => handleStart(fase._id)}
                       isLocked={isLocked}
+                      isCompletada={isCompletada}
+                      mensagemBloqueio={
+                        isLocked && faseAnterior
+                          ? `Complete a fase anterior "${faseAnterior.titulo}" para desbloquear`
+                          : undefined
+                      }
                     />
                   )}
                 </div>
