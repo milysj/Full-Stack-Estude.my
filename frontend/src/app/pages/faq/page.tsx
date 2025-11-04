@@ -32,8 +32,9 @@ export default function Home() {
                         <Faq/>
 
                         {/* Rodapé */}
-                        <Footer/>
+                        
                     </div>
+                    <Footer />
                 </div>
             </div>
         </>
