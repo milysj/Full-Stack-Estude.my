@@ -75,6 +75,16 @@ Principais recursos:
 
 ---
 
+## 📋 Requisitos Funcionais
+
+ <img width="680" height="630" alt="image" src="https://github.com/user-attachments/assets/f5771485-143a-40d1-9961-d93ac568b7b1" />
+
+## 📋 Requisitos Não Funcionais
+
+<img width="618" height="373" alt="image" src="https://github.com/user-attachments/assets/7eccd7d1-5f79-4e02-8e3e-4a0d0899e2f6" />
+
+---
+
 ## ⚙️ Tecnologias Utilizadas
 
 ### Backend
