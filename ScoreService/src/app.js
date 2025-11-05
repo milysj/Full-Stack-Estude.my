@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import scoreRoutes from "./routes/scoreRoutes.js";
+import swaggerDocs from "./swagger.js";
 
 const app = express();
 
@@ -59,6 +60,9 @@ app.get("/", (req, res) => {
 
 // Rotas
 app.use("/api/score", scoreRoutes);
+
+// Swagger Documentation
+swaggerDocs(app);
 
 // Middleware de tratamento de erros
 app.use((err, req, res, next) => {

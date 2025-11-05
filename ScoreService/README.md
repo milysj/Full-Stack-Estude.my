@@ -99,3 +99,27 @@ Authorization: Bearer <token>
 
 O microsserviço roda na porta **5001** por padrão (backend principal roda na 5000).
 
+## 📚 Documentação Swagger
+
+A documentação interativa da API está disponível através do Swagger UI:
+
+- **Local:** `http://localhost:5001/api-docs`
+- **Produção:** `https://sua-url-do-deploy.com/api-docs`
+
+### Funcionalidades do Swagger:
+
+- ✅ Visualizar todos os endpoints disponíveis
+- ✅ Ver detalhes de cada endpoint (parâmetros, respostas, etc.)
+- ✅ Testar requisições diretamente na interface
+- ✅ Ver exemplos de requisições e respostas
+- ✅ Entender os schemas de dados (Score, Error, etc.)
+- ✅ Autenticação JWT integrada
+
+### Como usar:
+
+1. Acesse `/api-docs` no navegador
+2. Clique em "Authorize" no topo da página
+3. Cole seu token JWT (sem "Bearer ")
+4. Clique em "Authorize" e depois "Close"
+5. Agora você pode testar os endpoints diretamente na interface
+
