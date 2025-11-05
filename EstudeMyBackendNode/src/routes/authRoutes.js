@@ -27,13 +27,6 @@ const upload = multer({ storage });
  * tags:
  *   name: Autenticação
  *   description: Rotas de login, registro e criação de perfil
- *
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
  */
 
 /**
@@ -41,7 +34,9 @@ const upload = multer({ storage });
  * /api/auth/login:
  *   post:
  *     summary: Faz login do usuário
+ *     description: Endpoint público para autenticação. Retorna um token JWT que deve ser usado nas requisições autenticadas.
  *     tags: [Autenticação]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
@@ -54,10 +49,16 @@ const upload = multer({ storage });
  *             properties:
  *               email:
  *                 type: string
+ *                 format: email
+ *                 description: Email do usuário
  *                 example: "joao@email.com"
  *               senha:
  *                 type: string
+ *                 description: Senha do usuário
  *                 example: "123456"
+ *           example:
+ *             email: "joao@email.com"
+ *             senha: "123456"
  *     responses:
  *       200:
  *         description: Login realizado com sucesso
@@ -68,12 +69,31 @@ const upload = multer({ storage });
  *               properties:
  *                 token:
  *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR..."
+ *                   description: Token JWT para autenticação nas próximas requisições
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *                 perfilCriado:
  *                   type: boolean
+ *                   description: Indica se o perfil do usuário já foi criado
  *                   example: false
  *       401:
- *         description: Credenciais inválidas
+ *         description: Credenciais inválidas (usuário não encontrado ou senha incorreta)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               usuarioNaoEncontrado:
+ *                 value:
+ *                   message: "Usuário não encontrado"
+ *               senhaIncorreta:
+ *                 value:
+ *                   message: "Senha incorreta"
+ *       404:
+ *         description: Usuário não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.post("/login", loginUser);
 
@@ -82,76 +102,68 @@ router.post("/login", loginUser);
  * /api/auth/register:
  *   post:
  *     summary: Cadastra um novo usuário (Aluno ou Professor)
+ *     description: |
+ *       Endpoint público para registro de novos usuários. Não requer autenticação.
+ *       Aceita dois tipos de usuário: ALUNO (sem campos adicionais) ou PROFESSOR (requer registro e titulação).
  *     tags: [Autenticação]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             oneOf:
- *               - type: object
- *                 required:
- *                   - nome
- *                   - email
- *                   - senha
- *                   - dataNascimento
- *                   - tipoUsuario
- *                 properties:
- *                   nome:
- *                     type: string
- *                     example: "João Victor"
- *                   email:
- *                     type: string
- *                     example: "joao@email.com"
- *                   senha:
- *                     type: string
- *                     example: "123456"
- *                   dataNascimento:
- *                     type: string
- *                     format: date
- *                     example: "2000-08-06"
- *                   tipoUsuario:
- *                     type: string
- *                     enum: [ALUNO]
- *                     example: "ALUNO"
- *               - type: object
- *                 required:
- *                   - nome
- *                   - email
- *                   - senha
- *                   - dataNascimento
- *                   - tipoUsuario
- *                   - registro
- *                   - titulacao
- *                 properties:
- *                   nome:
- *                     type: string
- *                     example: "Maria Professora"
- *                   email:
- *                     type: string
- *                     example: "maria@email.com"
- *                   senha:
- *                     type: string
- *                     example: "123456"
- *                   dataNascimento:
- *                     type: string
- *                     format: date
- *                     example: "1980-05-10"
- *                   tipoUsuario:
- *                     type: string
- *                     enum: [PROFESSOR]
- *                     example: "PROFESSOR"
- *                   registro:
- *                     type: string
- *                     example: "123456"
- *                   titulacao:
- *                     type: string
- *                     example: "Doutor"
+ *               - $ref: "#/components/schemas/RegisterAluno"
+ *               - $ref: "#/components/schemas/RegisterProfessor"
+ *           examples:
+ *             aluno:
+ *               summary: Exemplo de cadastro de aluno
+ *               value:
+ *                 nome: "João Victor"
+ *                 email: "joao1234@email.com"
+ *                 senha: "123456"
+ *                 dataNascimento: "2000-08-06"
+ *                 tipoUsuario: "ALUNO"
+ *             professor:
+ *               summary: Exemplo de cadastro de professor
+ *               value:
+ *                 nome: "Maria Professora"
+ *                 email: "maria@email.com"
+ *                 senha: "123456"
+ *                 dataNascimento: "1980-05-10"
+ *                 tipoUsuario: "PROFESSOR"
+ *                 registro: "123456"
+ *                 titulacao: "Doutor"
  *     responses:
  *       201:
  *         description: Usuário registrado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Usuário cadastrado com sucesso!"
  *       400:
  *         description: Dados inválidos ou email já cadastrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               emailExiste:
+ *                 value:
+ *                   message: "Email já cadastrado"
+ *               dadosInvalidos:
+ *                 value:
+ *                   message: "Dados inválidos ou email já cadastrado"
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.post("/register", registerUser);
 

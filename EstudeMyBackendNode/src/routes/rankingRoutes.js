@@ -44,6 +44,41 @@ const router = express.Router();
  *         description: Token ausente ou inválido
  */
 router.get("/", verificarToken, obterRanking);
+
+/**
+ * @swagger
+ * /api/ranking/nivel:
+ *   get:
+ *     summary: Obtém o ranking de usuários baseado no nível e XP
+ *     description: Ranking ordenado por nível (descendente), com desempate por XP total
+ *     tags: [Ranking]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Ranking por nível retornado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   position:
+ *                     type: number
+ *                     description: Posição no ranking
+ *                   name:
+ *                     type: string
+ *                     description: Nome do usuário
+ *                   nivel:
+ *                     type: number
+ *                     description: Nível do usuário
+ *                   xpTotal:
+ *                     type: number
+ *                     description: XP total do usuário
+ *       401:
+ *         description: Token ausente ou inválido
+ */
 router.get("/nivel", verificarToken, obterRankingNivel);
 
 export default router;

@@ -50,8 +50,9 @@ const router = express.Router();
  *                 example: "guerreiro"
  *               fotoPerfil:
  *                 type: string
- *                 format: binary
- *                 description: Imagem de perfil do usuário
+ *                 description: Tipo de personagem escolhido pelo usuário
+ *                 enum: [guerreiro, mago, samurai]
+ *                 example: "guerreiro"
  *     responses:
  *       201:
  *         description: Perfil criado com sucesso
