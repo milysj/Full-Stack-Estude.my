@@ -188,7 +188,7 @@ Authorization: Bearer <seu_token_jwt>
 |:---------:|:-----------:|:--------------|:-----------:|
 | **Sprint 1** | 15/09/2025 – 29/09/2025 | Criação do banco e autenticação inicial | ✅ Concluída |
 | **Sprint 2** | 30/09/2025 – 13/10/2025 | CRUD de usuários e cursos | ✅ Concluída |
-| **Sprint 3** | 14/10/2025 – 28/11/2025 | Integração com frontend e testes no Postman | 🕓 Em andamento |
+| **Sprint 3** | 14/10/2025 – 28/10/2025 | Integração com frontend e testes no Postman | ✅ Concluída |
 | **Sprint 4** | 29/10/2025 – 12/11/2025 | Deploy, documentação e melhorias finais | 🚀 Planejada |
 
 ---
@@ -201,7 +201,7 @@ Authorization: Bearer <seu_token_jwt>
 | João Quaresma | 💻 Frontend - Backend Developer |
 | Gabriel Lupateli | 👨‍💻 Product Owner|
 | Beatriz Siqueira | 👩‍💻 Scrum Master|
-| Wallacy José | 🧑‍💻 Frontend Devoloper |
+| Wallacy José | 👨‍💻 Frontend Devoloper |
 
 ---
 
