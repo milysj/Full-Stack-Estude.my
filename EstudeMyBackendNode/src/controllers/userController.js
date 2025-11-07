@@ -16,11 +16,7 @@ export const criarPerfil = async (req, res) => {
     let fotoPerfil = "";
 
     // Se enviou arquivo via upload
-    if (req.file) {
-      fotoPerfil = `/uploads/${req.file.filename}`;
-    } else if (fotoBody) {
-      fotoPerfil = fotoBody;
-    }
+
 
     // Validação dos campos obrigatórios
     if (!username?.trim() || !personagem?.trim() || !fotoPerfil?.trim()) {

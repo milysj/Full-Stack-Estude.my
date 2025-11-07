@@ -146,7 +146,7 @@ export default function CriarPerfil() {
           {/* Escolha de foto */}
           <div>
             <label className="block text-left text-gray-700 font-medium mb-1">
-              Escolha sua foto de perfil ou faça upload:
+              Escolha sua foto de perfil:
             </label>
             <div className="flex gap-4 mb-2 justify-center">
               {fotosPreDefinidas.map((url) => (
@@ -163,16 +163,6 @@ export default function CriarPerfil() {
                 />
               ))}
             </div>
-
-            <label className="cursor-pointer inline-block w-full text-center py-2 px-4 bg-gray-200 rounded-lg hover:bg-gray-300">
-              Selecionar arquivo
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
 
             {preview && (
               <div className="mt-4 flex justify-center">
