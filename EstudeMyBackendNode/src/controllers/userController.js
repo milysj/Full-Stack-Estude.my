@@ -12,11 +12,21 @@ export const criarPerfil = async (req, res) => {
       return res.status(401).json({ message: "Usuário não autenticado." });
     }
 
-    const { username, personagem, fotoPerfil: fotoBody } = req.body;
-    let fotoPerfil = "";
+    // Busca o usuário logado
+    const usuario = await User.findById(req.user._id);
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuário não encontrado." });
+    }
 
-    // Se enviou arquivo via upload
+    // Verifica se o perfil já foi criado
+    if (usuario.personagem && usuario.username && usuario.personagem.trim() !== "" && usuario.username.trim() !== "") {
+      return res.status(409).json({ 
+        message: "Perfil já criado. Você não pode criar o perfil novamente.",
+        perfilCriado: true
+      });
+    }
 
+    const { username, personagem, fotoPerfil } = req.body;
 
     // Validação dos campos obrigatórios
     if (!username?.trim() || !personagem?.trim() || !fotoPerfil?.trim()) {
@@ -25,10 +35,12 @@ export const criarPerfil = async (req, res) => {
       });
     }
 
-    // Busca o usuário logado
-    const usuario = await User.findById(req.user._id);
-    if (!usuario) {
-      return res.status(404).json({ message: "Usuário não encontrado." });
+    // Valida se a foto é uma das pré-definidas permitidas
+    const fotosPermitidas = ["/img/guerreiro.png", "/img/mago.png", "/img/samurai.png"];
+    if (!fotosPermitidas.includes(fotoPerfil.trim())) {
+      return res.status(400).json({
+        message: "Foto de perfil inválida. Escolha uma das fotos pré-definidas.",
+      });
     }
 
     // Atualiza os campos de perfil

@@ -172,13 +172,16 @@ router.post("/register", registerUser);
  * /api/auth/criarPerfil:
  *   post:
  *     summary: Cria um perfil de usuário
+ *     description: |
+ *       Endpoint para criar o perfil do usuário. Aceita apenas fotos pré-definidas.
+ *       Fotos permitidas: /img/guerreiro.png, /img/mago.png, /img/samurai.png
  *     tags: [Autenticação]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
@@ -188,21 +191,33 @@ router.post("/register", registerUser);
  *             properties:
  *               username:
  *                 type: string
+ *                 description: Nome de usuário único
  *                 example: "joaovictor"
  *               personagem:
  *                 type: string
- *                 example: "guerreiro"
+ *                 description: Personagem escolhido (Guerreiro, Mago ou Samurai)
+ *                 enum: [Guerreiro, Mago, Samurai]
+ *                 example: "Mago"
  *               fotoPerfil:
  *                 type: string
- *                 format: binary
+ *                 description: URL da foto de perfil pré-definida
+ *                 enum: ["/img/guerreiro.png", "/img/mago.png", "/img/samurai.png"]
+ *                 example: "/img/mago.png"
+ *           example:
+ *             username: "joaovictor"
+ *             personagem: "Mago"
+ *             fotoPerfil: "/img/mago.png"
  *     responses:
- *       201:
+ *       200:
  *         description: Perfil criado com sucesso
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Perfil criado com sucesso!"
  *                 usuario:
  *                   type: object
  *                   properties:
@@ -214,15 +229,43 @@ router.post("/register", registerUser);
  *                       example: "joaovictor"
  *                     personagem:
  *                       type: string
- *                       example: "guerreiro"
+ *                       example: "Mago"
  *                     fotoPerfil:
  *                       type: string
- *                       example: "/uploads/fotoPerfil-1698672000000-123456789.jpg"
+ *                       example: "/img/mago.png"
  *       400:
- *         description: Dados inválidos
+ *         description: Dados inválidos ou foto de perfil não permitida
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               camposObrigatorios:
+ *                 value:
+ *                   message: "Personagem, username e foto são obrigatórios!"
+ *               fotoInvalida:
+ *                 value:
+ *                   message: "Foto de perfil inválida. Escolha uma das fotos pré-definidas."
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *       409:
+ *         description: Perfil já criado. Não é possível criar o perfil novamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Perfil já criado. Você não pode criar o perfil novamente."
+ *                 perfilCriado:
+ *                   type: boolean
+ *                   example: true
  */
-router.post("/criarPerfil", verificarToken, upload.single("fotoPerfil"), criarPerfil);
+router.post("/criarPerfil", verificarToken, criarPerfil);
 
 export default router;
