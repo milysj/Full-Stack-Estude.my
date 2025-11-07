@@ -184,10 +184,11 @@ export default function Home() {
       </Script>
 
       <div
-        className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+        className="min-h-screen bg-cover bg-center bg-no-repeat relative"
         style={{
           backgroundImage: "url('/img/backgroundteste1.png')",
           backgroundColor: "#f3f4f6",
+          backgroundAttachment: "local", // Rola com o conteúdo, evitando oscilação
         }}
       >
         <div className="relative z-10 flex flex-col min-h-screen">
