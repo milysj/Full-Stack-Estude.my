@@ -8,7 +8,7 @@ export default function CriarPerfil() {
   const router = useRouter();
   const [personagem, setPersonagem] = useState<string | null>(null);
   const [username, setUsername] = useState("");
-  const [fotoPerfil, setFotoPerfil] = useState<File | string | null>(null); // Pode ser URL ou arquivo
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null); // Apenas URLs das fotos pré-definidas
   const [preview, setPreview] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState("");
   const [verificando, setVerificando] = useState(true);
@@ -24,14 +24,6 @@ export default function CriarPerfil() {
     "/img/mago.png",
     "/img/samurai.png",
   ];
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFotoPerfil(file);
-      setPreview(URL.createObjectURL(file));
-    }
-  };
 
   const handlePreDefinidaClick = (url: string) => {
     setFotoPerfil(url);
@@ -58,10 +50,14 @@ export default function CriarPerfil() {
 
         if (resposta.ok) {
           const dadosUsuario = await resposta.json();
-          
+
           // Se o perfil já foi criado (tem personagem e username), redireciona para home
-          if (dadosUsuario.personagem && dadosUsuario.username && 
-              dadosUsuario.personagem.trim() !== "" && dadosUsuario.username.trim() !== "") {
+          if (
+            dadosUsuario.personagem &&
+            dadosUsuario.username &&
+            dadosUsuario.personagem.trim() !== "" &&
+            dadosUsuario.username.trim() !== ""
+          ) {
             router.push("/pages/home");
             return;
           }
@@ -84,16 +80,6 @@ export default function CriarPerfil() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("personagem", personagem);
-    formData.append("username", username);
-
-    if (fotoPerfil instanceof File) {
-      formData.append("fotoPerfil", fotoPerfil);
-    } else if (typeof fotoPerfil === "string") {
-      formData.append("fotoPerfil", fotoPerfil);
-    }
-
     try {
       const token = localStorage.getItem("token");
       console.log("🔑 Token enviado:", token);
@@ -103,9 +89,14 @@ export default function CriarPerfil() {
       const resposta = await fetch(`${API_URL}/api/auth/criarPerfil`, {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: formData,
+        body: JSON.stringify({
+          personagem,
+          username,
+          fotoPerfil,
+        }),
       });
 
       const data = await resposta.json();
@@ -213,7 +204,7 @@ export default function CriarPerfil() {
             </label>
             <div className="flex gap-4 mb-2 justify-center">
               {fotosPreDefinidas.map((url) => (
-                <img
+                <Image
                   key={url}
                   src={url}
                   alt="pré-definida"
@@ -223,10 +214,10 @@ export default function CriarPerfil() {
                     fotoPerfil === url ? "border-blue-600" : "border-gray-300"
                   }`}
                   onClick={() => handlePreDefinidaClick(url)}
+                  unoptimized
                 />
               ))}
             </div>
-
 
             {preview && (
               <div className="mt-4 flex justify-center">
@@ -236,6 +227,7 @@ export default function CriarPerfil() {
                   width={120}
                   height={120}
                   className="rounded-full border-4 border-blue-400"
+                  unoptimized
                 />
               </div>
             )}
