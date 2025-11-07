@@ -26,13 +26,20 @@ export const criarPerfil = async (req, res) => {
       });
     }
 
-    const { username, personagem, fotoPerfil: fotoBody } = req.body;
-    let fotoPerfil = "";
+    const { username, personagem, fotoPerfil } = req.body;
 
     // Validação dos campos obrigatórios
     if (!username?.trim() || !personagem?.trim() || !fotoPerfil?.trim()) {
       return res.status(400).json({
         message: "Personagem, username e foto são obrigatórios!",
+      });
+    }
+
+    // Valida se a foto é uma das pré-definidas permitidas
+    const fotosPermitidas = ["/img/guerreiro.png", "/img/mago.png", "/img/samurai.png"];
+    if (!fotosPermitidas.includes(fotoPerfil.trim())) {
+      return res.status(400).json({
+        message: "Foto de perfil inválida. Escolha uma das fotos pré-definidas.",
       });
     }
 
