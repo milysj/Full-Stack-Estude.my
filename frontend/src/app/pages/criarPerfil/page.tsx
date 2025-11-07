@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function CriarPerfil() {
+  const router = useRouter();
   const [personagem, setPersonagem] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [fotoPerfil, setFotoPerfil] = useState<File | string | null>(null); // Pode ser URL ou arquivo
   const [preview, setPreview] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState("");
+  const [verificando, setVerificando] = useState(true);
 
   const personagens = [
     { nome: "Guerreiro", imagem: "/img/guerreiro.png" },
@@ -35,6 +38,44 @@ export default function CriarPerfil() {
     setPreview(url);
   };
 
+  // Verifica se o perfil já foi criado ao carregar a página
+  useEffect(() => {
+    const verificarPerfil = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          router.push("/pages/login");
+          return;
+        }
+
+        const API_URL =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const resposta = await fetch(`${API_URL}/api/users/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (resposta.ok) {
+          const dadosUsuario = await resposta.json();
+          
+          // Se o perfil já foi criado (tem personagem e username), redireciona para home
+          if (dadosUsuario.personagem && dadosUsuario.username && 
+              dadosUsuario.personagem.trim() !== "" && dadosUsuario.username.trim() !== "") {
+            router.push("/pages/home");
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao verificar perfil:", error);
+      } finally {
+        setVerificando(false);
+      }
+    };
+
+    verificarPerfil();
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -59,7 +100,7 @@ export default function CriarPerfil() {
 
       const API_URL =
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-      const resposta = await fetch(`${API_URL}/api/criarPerfil`, {
+      const resposta = await fetch(`${API_URL}/api/auth/criarPerfil`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -72,16 +113,38 @@ export default function CriarPerfil() {
       if (resposta.ok) {
         setMensagem("✅ Perfil criado com sucesso!");
         setTimeout(() => {
-          window.location.href = "/pages/home";
+          router.push("/pages/home");
         }, 1500);
       } else {
-        setMensagem(data.message || "❌ Erro ao criar perfil.");
+        // Se o perfil já foi criado (erro 409), redireciona para home
+        if (resposta.status === 409 && data.perfilCriado) {
+          setMensagem("ℹ️ Seu perfil já foi criado. Redirecionando...");
+          setTimeout(() => {
+            router.push("/pages/home");
+          }, 1500);
+        } else {
+          setMensagem(data.message || "❌ Erro ao criar perfil.");
+        }
       }
     } catch (error) {
       console.error(error);
       setMensagem("❌ Erro de conexão. Tente novamente.");
     }
   };
+
+  // Mostrar loading enquanto verifica o perfil
+  if (verificando) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center bg-cover bg-center"
+        style={{ backgroundImage: "url('/img/background.jpg')" }}
+      >
+        <div className="bg-white bg-opacity-90 p-8 rounded-2xl shadow-lg text-center">
+          <p className="text-gray-600">Verificando perfil...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -146,7 +209,7 @@ export default function CriarPerfil() {
           {/* Escolha de foto */}
           <div>
             <label className="block text-left text-gray-700 font-medium mb-1">
-              Escolha sua foto de perfil ou faça upload:
+              Escolha sua foto de perfil:
             </label>
             <div className="flex gap-4 mb-2 justify-center">
               {fotosPreDefinidas.map((url) => (
@@ -164,15 +227,6 @@ export default function CriarPerfil() {
               ))}
             </div>
 
-            <label className="cursor-pointer inline-block w-full text-center py-2 px-4 bg-gray-200 rounded-lg hover:bg-gray-300">
-              Selecionar arquivo
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
 
             {preview && (
               <div className="mt-4 flex justify-center">

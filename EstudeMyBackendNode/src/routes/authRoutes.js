@@ -220,8 +220,29 @@ router.post("/register", registerUser);
  *                       example: "/uploads/fotoPerfil-1698672000000-123456789.jpg"
  *       400:
  *         description: Dados inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *       409:
+ *         description: Perfil já criado. Não é possível criar o perfil novamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Perfil já criado. Você não pode criar o perfil novamente."
+ *                 perfilCriado:
+ *                   type: boolean
+ *                   example: true
  */
 router.post("/criarPerfil", verificarToken, upload.single("fotoPerfil"), criarPerfil);
 

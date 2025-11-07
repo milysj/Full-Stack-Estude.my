@@ -12,14 +12,28 @@ export const criarPerfil = async (req, res) => {
       return res.status(401).json({ message: "Usuário não autenticado." });
     }
 
+    // Busca o usuário logado
+    const usuario = await User.findById(req.user._id);
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuário não encontrado." });
+    }
+
+    // Verifica se o perfil já foi criado
+    if (usuario.personagem && usuario.username && usuario.personagem.trim() !== "" && usuario.username.trim() !== "") {
+      return res.status(409).json({ 
+        message: "Perfil já criado. Você não pode criar o perfil novamente.",
+        perfilCriado: true
+      });
+    }
+
     const { username, personagem, fotoPerfil: fotoBody } = req.body;
     let fotoPerfil = "";
 
-    // Se enviou arquivo via upload
+    // Processa a foto de perfil (pode vir do req.file ou req.body)
     if (req.file) {
       fotoPerfil = `/uploads/${req.file.filename}`;
-    } else if (fotoBody) {
-      fotoPerfil = fotoBody;
+    } else if (fotoBody && typeof fotoBody === "string") {
+      fotoPerfil = fotoBody.trim();
     }
 
     // Validação dos campos obrigatórios
@@ -27,12 +41,6 @@ export const criarPerfil = async (req, res) => {
       return res.status(400).json({
         message: "Personagem, username e foto são obrigatórios!",
       });
-    }
-
-    // Busca o usuário logado
-    const usuario = await User.findById(req.user._id);
-    if (!usuario) {
-      return res.status(404).json({ message: "Usuário não encontrado." });
     }
 
     // Atualiza os campos de perfil
