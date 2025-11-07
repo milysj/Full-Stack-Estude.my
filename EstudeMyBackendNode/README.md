@@ -75,6 +75,16 @@ Principais recursos:
 
 ---
 
+## 📋 Requisitos Funcionais
+
+ <img width="680" height="630" alt="image" src="https://github.com/user-attachments/assets/f5771485-143a-40d1-9961-d93ac568b7b1" />
+
+## 📋 Requisitos Não Funcionais
+
+<img width="618" height="373" alt="image" src="https://github.com/user-attachments/assets/7eccd7d1-5f79-4e02-8e3e-4a0d0899e2f6" />
+
+---
+
 ## ⚙️ Tecnologias Utilizadas
 
 ### Backend
@@ -178,7 +188,7 @@ Authorization: Bearer <seu_token_jwt>
 |:---------:|:-----------:|:--------------|:-----------:|
 | **Sprint 1** | 15/09/2025 – 29/09/2025 | Criação do banco e autenticação inicial | ✅ Concluída |
 | **Sprint 2** | 30/09/2025 – 13/10/2025 | CRUD de usuários e cursos | ✅ Concluída |
-| **Sprint 3** | 14/10/2025 – 28/11/2025 | Integração com frontend e testes no Postman | 🕓 Em andamento |
+| **Sprint 3** | 14/10/2025 – 28/10/2025 | Integração com frontend e testes no Postman | ✅ Concluída |
 | **Sprint 4** | 29/10/2025 – 12/11/2025 | Deploy, documentação e melhorias finais | 🚀 Planejada |
 
 ---
@@ -191,7 +201,7 @@ Authorization: Bearer <seu_token_jwt>
 | João Quaresma | 💻 Frontend - Backend Developer |
 | Gabriel Lupateli | 👨‍💻 Product Owner|
 | Beatriz Siqueira | 👩‍💻 Scrum Master|
-| Wallacy José | 🧑‍💻 Frontend Devoloper |
+| Wallacy José | 👨‍💻 Frontend Devoloper |
 
 ---
 

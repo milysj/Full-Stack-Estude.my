@@ -58,10 +58,14 @@ export default function CriarPerfil() {
 
         if (resposta.ok) {
           const dadosUsuario = await resposta.json();
-          
+
           // Se o perfil já foi criado (tem personagem e username), redireciona para home
-          if (dadosUsuario.personagem && dadosUsuario.username && 
-              dadosUsuario.personagem.trim() !== "" && dadosUsuario.username.trim() !== "") {
+          if (
+            dadosUsuario.personagem &&
+            dadosUsuario.username &&
+            dadosUsuario.personagem.trim() !== "" &&
+            dadosUsuario.username.trim() !== ""
+          ) {
             router.push("/pages/home");
             return;
           }
@@ -226,7 +230,6 @@ export default function CriarPerfil() {
                 />
               ))}
             </div>
-
 
             {preview && (
               <div className="mt-4 flex justify-center">
