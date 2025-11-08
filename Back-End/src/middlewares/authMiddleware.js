@@ -108,3 +108,37 @@ export const verificarAdministrador = async (req, res, next) => {
     });
   }
 };
+
+/**
+ * Middleware opcional para verificar token
+ * Se o token existir e for válido, adiciona o usuário ao req.user
+ * Se não existir ou for inválido, continua sem erro (req.user será undefined)
+ */
+export const verificarTokenOpcional = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      // Sem token, continua normalmente
+      req.user = undefined;
+      return next();
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const userId = decoded.id || decoded._id;
+    const user = await User.findById(userId).select("-senha");
+
+    if (user) {
+      req.user = user;
+    } else {
+      req.user = undefined;
+    }
+
+    next();
+  } catch (error) {
+    // Se houver erro (token inválido, expirado, etc.), continua sem usuário
+    req.user = undefined;
+    next();
+  }
+};

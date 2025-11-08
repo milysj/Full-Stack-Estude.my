@@ -7,19 +7,26 @@ import crypto from "crypto";
 
 export const criarPerfil = async (req, res) => {
   try {
+    console.log("=== Iniciando criação de perfil ===");
+    console.log("Body recebido:", req.body);
+    console.log("Usuário autenticado:", req.user?._id);
+
     // Verifica autenticação
     if (!req.user || !req.user._id) {
+      console.log("Erro: Usuário não autenticado");
       return res.status(401).json({ message: "Usuário não autenticado." });
     }
 
     // Busca o usuário logado
     const usuario = await User.findById(req.user._id);
     if (!usuario) {
+      console.log("Erro: Usuário não encontrado no banco");
       return res.status(404).json({ message: "Usuário não encontrado." });
     }
 
     // Verifica se o perfil já foi criado
     if (usuario.personagem && usuario.username && usuario.personagem.trim() !== "" && usuario.username.trim() !== "") {
+      console.log("Erro: Perfil já criado");
       return res.status(409).json({ 
         message: "Perfil já criado. Você não pode criar o perfil novamente.",
         perfilCriado: true
@@ -27,15 +34,37 @@ export const criarPerfil = async (req, res) => {
     }
 
     const { username, personagem, fotoPerfil } = req.body;
+    console.log("Dados recebidos:", { username, personagem, fotoPerfil });
 
     // Validação dos campos obrigatórios
     if (!username?.trim() || !personagem?.trim() || !fotoPerfil?.trim()) {
+      console.log("Erro: Campos obrigatórios faltando");
       return res.status(400).json({
         message: "Personagem, username e foto são obrigatórios!",
       });
     }
 
     const usernameTrimmed = username.trim();
+    const personagemTrimmed = personagem.trim();
+    const fotoPerfilTrimmed = fotoPerfil.trim();
+
+    // Valida se o personagem é válido
+    const personagensValidos = ["Guerreiro", "Mago", "Samurai"];
+    if (!personagensValidos.includes(personagemTrimmed)) {
+      console.log("Erro: Personagem inválido:", personagemTrimmed);
+      return res.status(400).json({
+        message: `Personagem inválido. Escolha entre: ${personagensValidos.join(", ")}`,
+      });
+    }
+
+    // Valida se a foto é uma das pré-definidas permitidas
+    const fotosPermitidas = ["/img/guerreiro.png", "/img/mago.png", "/img/samurai.png"];
+    if (!fotosPermitidas.includes(fotoPerfilTrimmed)) {
+      console.log("Erro: Foto de perfil inválida:", fotoPerfilTrimmed);
+      return res.status(400).json({
+        message: "Foto de perfil inválida. Escolha uma das fotos pré-definidas.",
+      });
+    }
 
     // Verifica se o username já existe em outro usuário
     const usuarioComUsername = await User.findOne({ 
@@ -44,47 +73,76 @@ export const criarPerfil = async (req, res) => {
     });
     
     if (usuarioComUsername) {
+      console.log("Erro: Username já em uso");
       return res.status(409).json({
         message: "Username já está em uso. Por favor, escolha outro username.",
       });
     }
 
-    // Valida se a foto é uma das pré-definidas permitidas
-    const fotosPermitidas = ["/img/guerreiro.png", "/img/mago.png", "/img/samurai.png"];
-    if (!fotosPermitidas.includes(fotoPerfil.trim())) {
-      return res.status(400).json({
-        message: "Foto de perfil inválida. Escolha uma das fotos pré-definidas.",
-      });
-    }
-
-    // Atualiza os campos de perfil
-    usuario.username = usernameTrimmed;
-    usuario.personagem = personagem.trim();
-    usuario.fotoPerfil = fotoPerfil.trim();
+    // Atualiza os campos de perfil usando findByIdAndUpdate para preservar todos os campos
+    // Isso evita problemas de validação com campos obrigatórios como tipoUsuario
+    console.log("Tentando atualizar usuário...");
+    console.log("Usuário atual antes da atualização:", {
+      _id: usuario._id,
+      tipoUsuario: usuario.tipoUsuario,
+      nome: usuario.nome,
+    });
 
     try {
-      await usuario.save();
+      const usuarioAtualizado = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $set: {
+            username: usernameTrimmed,
+            personagem: personagemTrimmed,
+            fotoPerfil: fotoPerfilTrimmed,
+          },
+        },
+        {
+          new: true, // Retorna o documento atualizado
+          runValidators: true, // Executa validações do schema
+        }
+      ).select("-senha -email -dataNascimento");
+
+      if (!usuarioAtualizado) {
+        console.log("Erro: Usuário não encontrado para atualização");
+        return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+
+      console.log("Usuário atualizado com sucesso");
+      console.log("Tipo de usuário preservado:", usuarioAtualizado.tipoUsuario);  
+
+      console.log("Perfil criado com sucesso!");
+      res.json({
+        message: "Perfil criado com sucesso!",
+        usuario: usuarioAtualizado,
+      });
     } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
       // Captura erro de duplicata do MongoDB (caso a verificação acima não tenha pego)
       if (error.code === 11000 && error.keyPattern?.username) {
         return res.status(409).json({
           message: "Username já está em uso. Por favor, escolha outro username.",
         });
       }
+      // Captura outros erros de validação do Mongoose
+      if (error.name === "ValidationError") {
+        const errors = Object.values(error.errors).map(e => e.message).join(", ");
+        console.error("Erro de validação:", errors);
+        return res.status(400).json({
+          message: `Erro de validação: ${errors}`,
+        });
+      }
       throw error; // Re-lança outros erros
     }
-
-    // Busca o usuário atualizado sem campos sensíveis
-    const usuarioRetorno = await User.findById(req.user._id)
-      .select("-senha -email -dataNascimento");
-
-    res.json({
-      message: "Perfil criado com sucesso!",
-      usuario: usuarioRetorno,
-    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Erro ao criar perfil." });
+    console.error("=== ERRO AO CRIAR PERFIL ===");
+    console.error("Erro completo:", error);
+    console.error("Stack:", error.stack);
+    res.status(500).json({ 
+      message: "Erro ao criar perfil.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
   
