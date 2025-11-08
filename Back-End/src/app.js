@@ -28,7 +28,7 @@ const corsOptions = {
     const allowedOrigins = [
       "http://localhost:3000",
       "http://localhost:3001",
-      "https://estude-my.vercel.app",
+      "https://estudemy.vercel.app",
       process.env.FRONTEND_URL,
     ].filter(Boolean); // Remove valores undefined/null
     

@@ -16,7 +16,7 @@ const corsOptions = {
       "http://localhost:3000",
       "http://localhost:3001",
       "http://localhost:5000", // Backend principal
-      "https://estude-my.vercel.app",
+      "https://estudemy.vercel.app",
       process.env.FRONTEND_URL,
     ].filter(Boolean);
     
