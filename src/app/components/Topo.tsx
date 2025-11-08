@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   List,
   Book,
@@ -22,9 +23,10 @@ import {
   HouseDoor,
   Person,
   // ThreeDots,
-  // Gear,
+  Gear,
   Search,
   ArrowLeft, // NOVO: Ícone para fechar a pesquisa mobile
+  ChevronDown,
   // Cart,
 } from "react-bootstrap-icons";
 
@@ -34,7 +36,6 @@ const Topo = () => {
   const [collapsed, setCollapsed] = useState(true); // Sidebar recolhida ou não
   const [sidebarToggled, setSidebarToggled] = useState(false); // Sidebar aberta no mobile
   const [navbarToggled, setNavbarToggled] = useState(false); // Navbar aberta no mobile
-  const [showDropdown, setShowDropdown] = useState(false); // Dropdown "Mais" visível
   const [isMobile, setIsMobile] = useState(false); // Se está em tela mobile
 
   // Estado para a barra de pesquisa
@@ -63,7 +64,7 @@ const Topo = () => {
   };
 
   // Função para lidar com a pesquisa
-  const handleSearchSubmit = (event) => {
+  const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault(); // Impede o recarregamento da página
     if (searchTerm.trim() !== "") {
       // Aqui você faria a lógica de pesquisa:
@@ -126,13 +127,43 @@ const Topo = () => {
       icon: <HouseDoor size={20} />,
       label: "Home",
     },
+    {
+      href: "/pages/ranking",
+      icon: <BarChart size={20} />,
+      label: "Ranking",
+    },
   ];
 
-  // Itens do dropdown "Perfil"
-  const dropdownItems = [
-    { href: "/pages/perfil", icon: <Person size={20} />, label: "Perfil" },
-    { href: "/pages/configuracoes", label: "Configurações" },
-    { href: "#", label: "Sair", variant: "danger", onClick: handleLogout },
+  // Itens do dropdown "Perfil" (incluindo itens da sidebar)
+  const dropdownItems: Array<{
+    href: string;
+    icon?: React.ReactNode;
+    label: string;
+    variant?: string;
+    onClick?: (e?: React.MouseEvent) => void;
+    separator?: boolean; // Indica se deve ter separador antes deste item
+  }> = [
+    { href: "/pages/perfil", icon: <Person size={18} />, label: "Perfil" },
+    { href: "/pages/configuracoes", icon: <Gear size={18} />, label: "Configurações" },
+    { href: "/pages/meusCursos", icon: <Book size={18} />, label: "Meus Cursos", separator: true },
+    { href: "/pages/salvas", icon: <BookmarkFill size={18} />, label: "Lições Salvas" },
+    { href: "/pages/gerenciarTrilha", icon: <BackpackFill size={18} />, label: "Gerenciar Trilhas" },
+    { 
+      href: "/pages/consultAi", 
+      icon: (
+        <div style={{ width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Image
+            width={18}
+            height={18}
+            src="/img/ConsultAi.png"
+            alt="ConsultAI"
+            style={{ objectFit: "contain" }}
+          />
+        </div>
+      ), 
+      label: "ConsultAI" 
+    },
+    { href: "#", label: "Sair", variant: "danger", onClick: handleLogout, separator: true },
   ];
 
   // Fecha o sidebar ao clicar em um link no mobile
@@ -144,8 +175,9 @@ const Topo = () => {
 
   return (
     <div className="flex">
+      {/* SIDEBAR COMENTADA - Conteúdos movidos para o dropdown */}
       {/* Botão para abrir o sidebar no mobile */}
-      {isMobile && (
+      {/* {isMobile && (
         <button
           onClick={() => setSidebarToggled(!sidebarToggled)}
           style={{
@@ -169,9 +201,9 @@ const Topo = () => {
         >
           <List size={16} />
         </button>
-      )}
+      )} */}
       {/* Fundo escuro ao abrir o sidebar no mobile */}
-      {isMobile && sidebarToggled && (
+      {/* {isMobile && sidebarToggled && (
         <div
           style={{
             position: "fixed",
@@ -184,8 +216,9 @@ const Topo = () => {
           }}
           onClick={() => setSidebarToggled(false)}
         />
-      )}
-      {/* Sidebar lateral (menu principal) */}
+      )} */}
+      {/* Sidebar lateral (menu principal) - COMENTADA */}
+      {/* 
       <Sidebar
         collapsed={isMobile ? false : collapsed}
         toggled={false}
@@ -211,7 +244,6 @@ const Topo = () => {
           },
         }}
       >
-        {/* Menu do sidebar */}
         <Menu
           menuItemStyles={{
             button: {
@@ -223,14 +255,11 @@ const Topo = () => {
             },
           }}
         >
-          {/* Item do menu para expandir/recolher */}
-
           <div
             style={{
               marginTop: "50px",
             }}
           >
-            {/* Lista dos itens do menu lateral */}
             <div
               style={{
                 height: "calc(100vh - 120px)",
@@ -255,7 +284,6 @@ const Topo = () => {
             </div>
           </div>
 
-          {/* Item fixo no final do sidebar (ConsultAI) */}
           <div
             style={{
               position: "absolute",
@@ -289,11 +317,12 @@ const Topo = () => {
           </div>
         </Menu>
       </Sidebar>
+      */}
 
       {/* Conteúdo principal e navbar superior */}
       <div
         style={{
-          marginLeft: isMobile ? "0px" : collapsed ? "0px" : "00px",
+          marginLeft: "0px", // Sidebar removida, não precisa mais de margem
           transition: "margin-left 0.3s",
           width: "100%",
         }}
@@ -331,7 +360,7 @@ const Topo = () => {
               >
                 <div
                   style={{
-                    marginLeft: isMobile ? "50px" : "80px",
+                    marginLeft: isMobile ? "15px" : "20px", // Ajustado pois não há mais sidebar
                     transition: "margin-left 0.3s",
                     display: "flex",
                     alignItems: "center",
@@ -364,9 +393,9 @@ const Topo = () => {
             {/* Barra de Pesquisa (Desktop) - ALTERADO: Renderização condicional */}
             {!isMobile && (
               <Form
-                className="d-flex my-2 my-lg-0 me-auto ms-lg-4"
+                className="d-flex my-2 my-lg-0 me-auto ms-lg-4 px-auto alli"
                 onSubmit={handleSearchSubmit}
-                style={{ flexGrow: 0.5, maxWidth: "450px" }}
+                style={{ flexGrow: 0.5, maxWidth: "900px" }}
               >
                 <FormControl
                   type="search"
@@ -377,7 +406,7 @@ const Topo = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{
                     height: "38px",
-                    marginLeft: "80px",
+                    marginLeft: "80px", // Ajustado pois não há mais sidebar
                   }}
                 />
                 <Button
@@ -498,94 +527,160 @@ const Topo = () => {
                     </Nav.Item>
                   ))}
 
-                  {/* Dropdown "Perfil" (aparece só no desktop) */}
+                  {/* Dropdown "Perfil" (aparece só no desktop) - Usando Radix UI */}
                   {!isMobile && (
-                    <Nav.Item as="li" className="dropdown-container">
-                      <div
-                        className="dropdown-toggle"
-                        onMouseEnter={() => setShowDropdown(true)}
-                        onMouseLeave={() => setShowDropdown(false)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <div className="d-flex align-items-center nav-link2">
-                          <Person className="me-2" />
-                        </div>
+                    <Nav.Item as="li">
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <button
+                            className="d-flex align-items-center nav-link2 border-0 bg-transparent"
+                            style={{
+                              padding: "10px 15px",
+                              cursor: "pointer",
+                              color: "inherit",
+                            }}
+                            aria-label="Menu do perfil"
+                          >
+                            <Person className="me-2" size={20} />
+                            <ChevronDown size={14} style={{ marginLeft: "4px" }} />
+                          </button>
+                        </DropdownMenu.Trigger>
 
-                        {/* Itens do dropdown */}
-                        {showDropdown && (
-                          <div className="custom-dropdown">
-                            {dropdownItems.map((item, index) =>
-                              item.onClick ? (
-                                <a
-                                  href="#"
-                                  key={index}
-                                  className={`dropdown-item ${
-                                    item.variant === "danger"
-                                      ? "text-danger"
-                                      : ""
-                                  }`}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    setShowDropdown(false);
-                                    item.onClick?.(e);
-                                  }}
-                                  style={{ cursor: "pointer" }}
-                                >
-                                  {item.label}
-                                </a>
-                              ) : (
-                                <Link
-                                  href={item.href}
-                                  key={index}
-                                  className={`dropdown-item ${
-                                    item.variant === "danger"
-                                      ? "text-danger"
-                                      : ""
-                                  }`}
-                                  onClick={() => setShowDropdown(false)}
-                                >
-                                  {item.label}
-                                </Link>
-                              )
-                            )}
-                          </div>
-                        )}
-                      </div>
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.Content
+                            sideOffset={5}
+                            align="end"
+                            className="radix-dropdown-content"
+                            style={{
+                              backgroundColor: "white",
+                              borderRadius: "6px",
+                              padding: "4px",
+                              minWidth: "200px",
+                              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                              border: "1px solid #e5e7eb",
+                              zIndex: 1000,
+                            }}
+                          >
+                            {dropdownItems.map((item, index) => (
+                              <React.Fragment key={index}>
+                                {item.separator && index > 0 && (
+                                  <DropdownMenu.Separator
+                                    style={{
+                                      height: "1px",
+                                      backgroundColor: "#e5e7eb",
+                                      margin: "4px 0",
+                                    }}
+                                  />
+                                )}
+                                {item.onClick ? (
+                                  <DropdownMenu.Item
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      padding: "8px 12px",
+                                      fontSize: "14px",
+                                      cursor: "pointer",
+                                      outline: "none",
+                                      borderRadius: "4px",
+                                      color: item.variant === "danger" ? "#dc3545" : "#333",
+                                    }}
+                                    onSelect={(e) => {
+                                      e.preventDefault();
+                                      item.onClick?.(e as any);
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor =
+                                        item.variant === "danger" ? "#fee2e2" : "#e0f2fe";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = "transparent";
+                                    }}
+                                  >
+                                    {item.icon && (
+                                      <span
+                                        style={{
+                                          marginRight: "8px",
+                                          display: "flex",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        {item.icon}
+                                      </span>
+                                    )}
+                                    {item.label}
+                                  </DropdownMenu.Item>
+                                ) : (
+                                  <DropdownMenu.Item asChild>
+                                    <Link
+                                      href={item.href}
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "8px 12px",
+                                        fontSize: "14px",
+                                        cursor: "pointer",
+                                        textDecoration: "none",
+                                        color: item.variant === "danger" ? "#dc3545" : "#333",
+                                        borderRadius: "4px",
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor =
+                                          item.variant === "danger" ? "#fee2e2" : "#e0f2fe";
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = "transparent";
+                                      }}
+                                    >
+                                      {item.icon && (
+                                        <span
+                                          style={{
+                                            marginRight: "8px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                          }}
+                                        >
+                                          {item.icon}
+                                        </span>
+                                      )}
+                                      {item.label}
+                                    </Link>
+                                  </DropdownMenu.Item>
+                                )}
+                              </React.Fragment>
+                            ))}
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Root>
                     </Nav.Item>
                   )}
 
                   {/* Itens do dropdown "Mais" (aparecem direto no mobile) */}
                   {isMobile &&
                     dropdownItems.map((item, index) => (
-                      <Nav.Item as="li" key={`mobile-${index}`}>
-                        {item.onClick ? (
-                          <Nav.Link
-                            as="span" // Evita <a> aninhado
-                            className={`d-flex align-items-center ${
-                              item.variant === "danger" ? "text-danger" : ""
-                            }`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setNavbarToggled(false);
-                              item.onClick?.(e);
-                            }}
-                            style={{
-                              padding: isMobile ? "4px 8px" : "8px 12px",
-                              fontSize: isMobile ? "0.85rem" : "1rem",
-                              minHeight: isMobile ? "32px" : "auto",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {item.label}
-                          </Nav.Link>
-                        ) : (
-                          <Link href={item.href}>
+                      <React.Fragment key={`mobile-${index}`}>
+                        {item.separator && index > 0 && (
+                          <Nav.Item as="li">
+                            <div
+                              style={{
+                                height: "1px",
+                                backgroundColor: "#e5e7eb",
+                                margin: "8px 0",
+                              }}
+                            />
+                          </Nav.Item>
+                        )}
+                        <Nav.Item as="li">
+                          {item.onClick ? (
                             <Nav.Link
                               as="span" // Evita <a> aninhado
                               className={`d-flex align-items-center ${
                                 item.variant === "danger" ? "text-danger" : ""
                               }`}
-                              onClick={() => setNavbarToggled(false)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setNavbarToggled(false);
+                                item.onClick?.(e);
+                              }}
                               style={{
                                 padding: isMobile ? "4px 8px" : "8px 12px",
                                 fontSize: isMobile ? "0.85rem" : "1rem",
@@ -593,11 +688,31 @@ const Topo = () => {
                                 cursor: "pointer",
                               }}
                             >
+                              {item.icon && <span className="me-2">{item.icon}</span>}
                               {item.label}
                             </Nav.Link>
-                          </Link>
-                        )}
-                      </Nav.Item>
+                          ) : (
+                            <Link href={item.href}>
+                              <Nav.Link
+                                as="span" // Evita <a> aninhado
+                                className={`d-flex align-items-center ${
+                                  item.variant === "danger" ? "text-danger" : ""
+                                }`}
+                                onClick={() => setNavbarToggled(false)}
+                                style={{
+                                  padding: isMobile ? "4px 8px" : "8px 12px",
+                                  fontSize: isMobile ? "0.85rem" : "1rem",
+                                  minHeight: isMobile ? "32px" : "auto",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {item.icon && <span className="me-2">{item.icon}</span>}
+                                {item.label}
+                              </Nav.Link>
+                            </Link>
+                          )}
+                        </Nav.Item>
+                      </React.Fragment>
                     ))}
                 </Nav>
               </Navbar.Collapse>

@@ -55,7 +55,7 @@
 }
 
 /* ===========================
-   Dropdown customizado
+   Dropdown customizado (antigo - mantido para compatibilidade)
    =========================== */
 .custom-dropdown {
     position: absolute;
@@ -77,6 +77,29 @@
 .dropdown-item:hover {
     background-color: #00a2ff; /* efeito hover */
     text-decoration: none;
+}
+
+/* ===========================
+   Radix UI Dropdown Menu
+   =========================== */
+@keyframes slideDownAndFade {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.radix-dropdown-content {
+    animation: slideDownAndFade 0.2s ease-out;
+}
+
+/* Reset de estilos padrão do Radix para melhor controle */
+[data-radix-dropdown-menu-content] {
+    outline: none;
 }
 
 /* ===========================
@@ -185,4 +208,14 @@
   body {
     @apply bg-background text-foreground;
     }
+}
+
+/* ===========================
+   Prevenir oscilação do background
+   Solução simplificada: scrollbar-gutter mantém layout estável
+   =========================== */
+body {
+    /* Reserva espaço para scrollbar, prevenindo layout shift */
+    /* Quando scrollbar aparece/desaparece, o espaço já está reservado */
+    scrollbar-gutter: stable;
 }
