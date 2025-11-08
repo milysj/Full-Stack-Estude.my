@@ -101,17 +101,42 @@ export const buscarFasesPorTrilha = async (req, res) => {
   }
 };
 
-// Atualizar fase
+// Atualizar fase (administradores podem atualizar qualquer fase)
 export const atualizarFase = async (req, res) => {
   try {
+    const userId = req.user?._id;
+    const tipoUsuario = req.user?.tipoUsuario;
     const { id } = req.params;
     const { trilhaId, titulo, descricao, conteudo, ordem, perguntas } = req.body;
+
+    // Buscar a fase atual para verificar permissões
+    const faseAtual = await Fase.findById(id);
+    if (!faseAtual) {
+      return res.status(404).json({ message: "Fase não encontrada" });
+    }
+
+    // Se não for administrador, verificar se a fase pertence a uma trilha do professor
+    if (tipoUsuario !== "ADMINISTRADOR") {
+      const trilha = await Trilha.findById(faseAtual.trilhaId);
+      if (!trilha || trilha.usuario.toString() !== userId.toString()) {
+        return res.status(403).json({ 
+          message: "Acesso negado. Você só pode editar fases das suas próprias trilhas." 
+        });
+      }
+    }
 
     // Se trilhaId for fornecido, validar se existe
     if (trilhaId) {
       const trilha = await Trilha.findById(trilhaId);
       if (!trilha) {
         return res.status(404).json({ message: "Trilha não encontrada" });
+      }
+      
+      // Se não for administrador, verificar se a nova trilha também pertence ao professor
+      if (tipoUsuario !== "ADMINISTRADOR" && trilha.usuario.toString() !== userId.toString()) {
+        return res.status(403).json({ 
+          message: "Acesso negado. Você só pode mover fases para suas próprias trilhas." 
+        });
       }
     }
 
@@ -132,10 +157,29 @@ export const atualizarFase = async (req, res) => {
   }
 };
 
-// Deletar fase
+// Deletar fase (administradores podem deletar qualquer fase)
 export const deletarFase = async (req, res) => {
   try {
+    const userId = req.user?._id;
+    const tipoUsuario = req.user?.tipoUsuario;
     const { id } = req.params;
+
+    // Buscar a fase para verificar permissões
+    const fase = await Fase.findById(id);
+    if (!fase) {
+      return res.status(404).json({ message: "Fase não encontrada" });
+    }
+
+    // Se não for administrador, verificar se a fase pertence a uma trilha do professor
+    if (tipoUsuario !== "ADMINISTRADOR") {
+      const trilha = await Trilha.findById(fase.trilhaId);
+      if (!trilha || trilha.usuario.toString() !== userId.toString()) {
+        return res.status(403).json({ 
+          message: "Acesso negado. Você só pode deletar fases das suas próprias trilhas." 
+        });
+      }
+    }
+
     const deletada = await Fase.findByIdAndDelete(id);
     
     if (!deletada) {

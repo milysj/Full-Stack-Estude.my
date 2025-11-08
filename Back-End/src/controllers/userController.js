@@ -92,6 +92,13 @@ export const registerUser = async (req, res) => {
   try {
     const { nome, email, senha, dataNascimento, tipoUsuario, registro, titulacao, aceiteTermos } = req.body;
 
+    // Validação: não permitir criar usuário como ADMINISTRADOR via API
+    if (tipoUsuario === "ADMINISTRADOR") {
+      return res.status(403).json({ 
+        message: "Não é possível criar usuário administrador via API. Contate o suporte." 
+      });
+    }
+
     // Validação do termo de consentimento
     if (!aceiteTermos || aceiteTermos !== true) {
       return res.status(400).json({ 
@@ -133,6 +140,13 @@ export const registerUser = async (req, res) => {
     if (idade < 14) {
       return res.status(400).json({ 
         message: "É necessário ter no mínimo 14 anos para criar uma conta" 
+      });
+    }
+
+    // Validação de senha (mínimo 8 caracteres)
+    if (!senha || senha.length < 8) {
+      return res.status(400).json({
+        message: "A senha deve ter no mínimo 8 caracteres",
       });
     }
 
@@ -332,11 +346,18 @@ export const buscarMeusDados = async (req, res) => {
 export const atualizarDadosPessoais = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { nome, telefone, endereco, dataNascimento } = req.body;
+    const { nome, telefone, endereco, dataNascimento, tipoUsuario } = req.body;
 
     const usuario = await User.findById(userId);
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    // Validação: não permitir alterar tipoUsuario via API
+    if (tipoUsuario !== undefined) {
+      return res.status(403).json({ 
+        message: "Não é possível alterar o tipo de usuário via API. O tipo de usuário ADMINISTRADOR só pode ser definido manualmente no banco de dados." 
+      });
     }
 
     // Atualiza apenas os campos fornecidos
@@ -370,9 +391,9 @@ export const mudarSenha = async (req, res) => {
       });
     }
 
-    if (novaSenha.length < 6) {
+    if (novaSenha.length < 8) {
       return res.status(400).json({
-        message: "A nova senha deve ter pelo menos 6 caracteres",
+        message: "A nova senha deve ter no mínimo 8 caracteres",
       });
     }
 
@@ -464,9 +485,9 @@ export const redefinirSenha = async (req, res) => {
       });
     }
 
-    if (novaSenha.length < 6) {
+    if (novaSenha.length < 8) {
       return res.status(400).json({
-        message: "A nova senha deve ter pelo menos 6 caracteres",
+        message: "A nova senha deve ter no mínimo 8 caracteres",
       });
     }
 

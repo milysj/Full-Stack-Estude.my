@@ -118,6 +118,7 @@ router.post("/login", loginUser);
  *       Requisitos: 
  *       - O usuário deve ter no mínimo 14 anos de idade.
  *       - É obrigatório aceitar os termos de uso e política de privacidade (aceiteTermos: true).
+ *       - O tipo ADMINISTRADOR não pode ser criado via API, apenas manualmente no banco de dados.
  *     tags: [Autenticação]
  *     security: []
  *     requestBody:
@@ -134,7 +135,7 @@ router.post("/login", loginUser);
  *               value:
  *                 nome: "João Victor"
  *                 email: "joao1234@email.com"
- *                 senha: "123456"
+ *                 senha: "senha123"
  *                 dataNascimento: "2000-08-06"
  *                 tipoUsuario: "ALUNO"
  *                 aceiteTermos: true
@@ -143,7 +144,7 @@ router.post("/login", loginUser);
  *               value:
  *                 nome: "Maria Professora"
  *                 email: "maria@email.com"
- *                 senha: "123456"
+ *                 senha: "senha123"
  *                 dataNascimento: "1980-05-10"
  *                 tipoUsuario: "PROFESSOR"
  *                 registro: "123456"
@@ -182,9 +183,23 @@ router.post("/login", loginUser);
  *               termoNaoAceito:
  *                 value:
  *                   message: "É necessário aceitar os termos de uso e política de privacidade para criar uma conta"
+ *               senhaInvalida:
+ *                 value:
+ *                   message: "A senha deve ter no mínimo 8 caracteres"
  *               dadosInvalidos:
  *                 value:
  *                   message: "Dados inválidos ou email já cadastrado"
+ *       403:
+ *         description: Tentativa de criar usuário como ADMINISTRADOR
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               administradorNegado:
+ *                 summary: Tentativa de criar administrador
+ *                 value:
+ *                   message: "Não é possível criar usuário administrador via API. Contate o suporte."
  *       500:
  *         description: Erro interno do servidor
  *         content:

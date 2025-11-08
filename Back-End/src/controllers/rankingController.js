@@ -109,9 +109,10 @@ export const obterRanking = async (req, res) => {
         },
       },
       {
-        // Filtrar apenas usuários que têm pelo menos uma fase completada
+        // Filtrar apenas usuários que têm pelo menos uma fase completada E que são ALUNOS (não professores)
         $match: {
           totalFases: { $gt: 0 },
+          "usuario.tipoUsuario": { $ne: "PROFESSOR" },
         },
       },
       {
@@ -162,8 +163,8 @@ export const obterRanking = async (req, res) => {
 // Obter ranking de usuários baseado no nível/XP
 export const obterRankingNivel = async (req, res) => {
   try {
-    // Buscar todos os usuários (agora não filtramos por xpTotal, pois está no microsserviço)
-    const usuarios = await User.find({}).select("nome username personagem fotoPerfil");
+    // Buscar apenas ALUNOS (excluir professores do ranking, mas eles continuam recebendo XP)
+    const usuarios = await User.find({ tipoUsuario: "ALUNO" }).select("nome username personagem fotoPerfil tipoUsuario");
 
     if (usuarios.length === 0) {
       return res.json([]);

@@ -34,13 +34,17 @@ export const criarTrilha = async (req, res) => {
   }
 };
 
-// Lista todas as trilhas do usuário autenticado
+// Lista todas as trilhas do usuário autenticado (ou todas se for ADMINISTRADOR)
 export const listarTrilhas = async (req, res) => {
   try {
     const userId = req.user?._id;
+    const tipoUsuario = req.user?.tipoUsuario;
     if (!userId) return res.status(401).json({ message: "Usuário não autenticado" });
 
-    const trilhas = await Trilha.find({ usuario: userId })
+    // Administradores veem todas as trilhas, professores veem apenas as suas
+    const query = tipoUsuario === "ADMINISTRADOR" ? {} : { usuario: userId };
+
+    const trilhas = await Trilha.find(query)
       .select("-usuariosIniciaram") // Remove o campo usuariosIniciaram do retorno (o dono pode ver depois se precisar)
       .sort({ createdAt: -1 });
     res.json(trilhas);
@@ -50,10 +54,11 @@ export const listarTrilhas = async (req, res) => {
   }
 };
 
-// Atualiza uma trilha existente
+// Atualiza uma trilha existente (administradores podem atualizar qualquer trilha)
 export const atualizarTrilha = async (req, res) => {
   try {
     const userId = req.user?._id;
+    const tipoUsuario = req.user?.tipoUsuario;
     const { id } = req.params;
 
     // Garantir que a imagem seja sempre definida (ou mantém a atual se não fornecida)
@@ -64,8 +69,13 @@ export const atualizarTrilha = async (req, res) => {
       dadosAtualizacao.imagem = trilhaAtual?.imagem || "/img/fases/vila.jpg";
     }
 
+    // Administradores podem atualizar qualquer trilha, professores apenas as suas
+    const query = tipoUsuario === "ADMINISTRADOR" 
+      ? { _id: id }
+      : { _id: id, usuario: userId };
+
     const trilha = await Trilha.findOneAndUpdate(
-      { _id: id, usuario: userId },
+      query,
       dadosAtualizacao,
       { new: true }
     );
@@ -83,13 +93,19 @@ export const atualizarTrilha = async (req, res) => {
   }
 };
 
-// Deleta uma trilha
+// Deleta uma trilha (administradores podem deletar qualquer trilha)
 export const deletarTrilha = async (req, res) => {
   try {
     const userId = req.user?._id;
+    const tipoUsuario = req.user?.tipoUsuario;
     const { id } = req.params;
 
-    const trilha = await Trilha.findOneAndDelete({ _id: id, usuario: userId });
+    // Administradores podem deletar qualquer trilha, professores apenas as suas
+    const query = tipoUsuario === "ADMINISTRADOR"
+      ? { _id: id }
+      : { _id: id, usuario: userId };
+
+    const trilha = await Trilha.findOneAndDelete(query);
     if (!trilha) return res.status(404).json({ message: "Trilha não encontrada" });
 
     res.json({ message: "Trilha excluída com sucesso" });

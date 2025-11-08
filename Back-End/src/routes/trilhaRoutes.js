@@ -1,6 +1,6 @@
 // src/routes/trilhaRoutes.js
 import express from "express";
-import { verificarToken } from "../middlewares/authMiddleware.js";
+import { verificarToken, verificarProfessor } from "../middlewares/authMiddleware.js";
 import {
   criarTrilha,
   listarTrilhas,
@@ -33,7 +33,7 @@ const router = express.Router();
  * /api/trilhas:
  *   post:
  *     summary: Cria uma nova trilha
- *     description: Cria uma nova trilha associada ao usuário autenticado. A imagem padrão será aplicada se não fornecida.
+ *     description: Cria uma nova trilha associada ao usuário autenticado. A imagem padrão será aplicada se não fornecida. Apenas PROFESSORES e ADMINISTRADORES podem criar trilhas.
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
@@ -122,6 +122,18 @@ const router = express.Router();
  *                 value:
  *                   success: false
  *                   message: "Token inválido."
+ *       403:
+ *         description: Acesso negado - Apenas professores e administradores podem criar trilhas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               acessoNegado:
+ *                 summary: Usuário não tem permissão
+ *                 value:
+ *                   success: false
+ *                   message: "Acesso negado. Apenas professores e administradores podem realizar esta ação."
  *       500:
  *         description: Erro interno do servidor
  *         content:
@@ -133,14 +145,14 @@ const router = express.Router();
  *                 value:
  *                   message: "Erro ao criar trilha"
  */
-router.post("/", verificarToken, criarTrilha);
+router.post("/", verificarToken, verificarProfessor, criarTrilha);
 
 /**
  * @swagger
  * /api/trilhas:
  *   get:
  *     summary: Lista todas as trilhas do usuário autenticado
- *     description: Retorna todas as trilhas criadas pelo usuário autenticado, ordenadas por data de criação (mais recentes primeiro)
+ *     description: Retorna todas as trilhas criadas pelo usuário autenticado, ordenadas por data de criação (mais recentes primeiro). PROFESSORES veem apenas suas trilhas. ADMINISTRADORES veem todas as trilhas.
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
@@ -162,13 +174,14 @@ router.post("/", verificarToken, criarTrilha);
  *       500:
  *         description: Erro interno do servidor
  */
-router.get("/", verificarToken, listarTrilhas);
+router.get("/", verificarToken, verificarProfessor, listarTrilhas);
 
 /**
  * @swagger
  * /api/trilhas/{id}:
  *   put:
- *     summary: Atualiza uma trilha existente (somente pelo dono)
+ *     summary: Atualiza uma trilha existente
+ *     description: Atualiza uma trilha existente. PROFESSORES podem atualizar apenas suas próprias trilhas. ADMINISTRADORES podem atualizar qualquer trilha.
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
@@ -212,13 +225,14 @@ router.get("/", verificarToken, listarTrilhas);
  *       404:
  *         description: Trilha não encontrada
  */
-router.put("/:id", verificarToken, atualizarTrilha);
+router.put("/:id", verificarToken, verificarProfessor, atualizarTrilha);
 
 /**
  * @swagger
  * /api/trilhas/{id}:
  *   delete:
- *     summary: Deleta uma trilha (somente pelo dono)
+ *     summary: Deleta uma trilha
+ *     description: Deleta uma trilha existente. PROFESSORES podem deletar apenas suas próprias trilhas. ADMINISTRADORES podem deletar qualquer trilha.
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
@@ -239,7 +253,7 @@ router.put("/:id", verificarToken, atualizarTrilha);
  *       404:
  *         description: Trilha não encontrada
  */
-router.delete("/:id", verificarToken, deletarTrilha);
+router.delete("/:id", verificarToken, verificarProfessor, deletarTrilha);
 
 /**
  * @swagger

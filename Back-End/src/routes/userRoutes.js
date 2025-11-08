@@ -91,7 +91,7 @@ router.get("/me", verificarToken, buscarMeusDados);
  * /api/users/dados-pessoais:
  *   put:
  *     summary: Atualiza dados pessoais do usuário
- *     description: Atualiza os dados pessoais do usuário autenticado. Apenas os campos fornecidos serão atualizados.
+ *     description: Atualiza os dados pessoais do usuário autenticado. Apenas os campos fornecidos serão atualizados. O campo tipoUsuario não pode ser alterado via API. O tipo ADMINISTRADOR só pode ser definido manualmente no banco de dados.
  *     tags: [Usuários]
  *     security:
  *       - bearerAuth: []
@@ -144,6 +144,17 @@ router.get("/me", verificarToken, buscarMeusDados);
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Error"
+ *       403:
+ *         description: Tentativa de alterar tipoUsuario
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               tipoUsuarioAlterado:
+ *                 summary: Tentativa de alterar tipo de usuário
+ *                 value:
+ *                   message: "Não é possível alterar o tipo de usuário via API. O tipo de usuário ADMINISTRADOR só pode ser definido manualmente no banco de dados."
  */
 router.put("/dados-pessoais", verificarToken, atualizarDadosPessoais);
 
@@ -172,8 +183,8 @@ router.put("/dados-pessoais", verificarToken, atualizarDadosPessoais);
  *                 example: "123456"
  *               novaSenha:
  *                 type: string
- *                 minLength: 6
- *                 description: Nova senha (mínimo 6 caracteres)
+ *                 minLength: 8
+ *                 description: Nova senha (mínimo 8 caracteres)
  *                 example: "novaSenha123"
  *     responses:
  *       200:
@@ -187,11 +198,15 @@ router.put("/dados-pessoais", verificarToken, atualizarDadosPessoais);
  *                   type: string
  *                   example: "Senha alterada com sucesso!"
  *       400:
- *         description: Campos obrigatórios ausentes ou nova senha muito curta
+ *         description: Campos obrigatórios ausentes ou nova senha muito curta (mínimo 8 caracteres)
  *         content:
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               senhaCurta:
+ *                 value:
+ *                   message: "A nova senha deve ter no mínimo 8 caracteres"
  *       401:
  *         description: Senha atual incorreta ou token inválido
  *         content:
@@ -272,6 +287,8 @@ router.get("/verificar-token/:token", verificarTokenReset);
  *                 type: string
  *               novaSenha:
  *                 type: string
+ *                 minLength: 8
+ *                 description: Nova senha (mínimo 8 caracteres)
  *     responses:
  *       200:
  *         description: Senha alterada com sucesso

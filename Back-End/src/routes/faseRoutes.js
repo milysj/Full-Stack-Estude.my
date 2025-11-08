@@ -7,7 +7,7 @@ import {
   atualizarFase,
   deletarFase,
 } from "../controllers/faseController.js";
-import { verificarToken } from "../middlewares/authMiddleware.js";
+import { verificarToken, verificarProfessor } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 /**
@@ -64,7 +64,7 @@ router.get("/", verificarToken, listarFases);
  * /api/fases:
  *   post:
  *     summary: Cria uma nova fase vinculada a uma trilha
- *     description: Cria uma nova fase associada a uma trilha existente. A trilha deve existir e o campo ordem é obrigatório.
+ *     description: Cria uma nova fase associada a uma trilha existente. A trilha deve existir e o campo ordem é obrigatório. Apenas PROFESSORES e ADMINISTRADORES podem criar fases.
  *     tags: [Fases]
  *     security:
  *       - bearerAuth: []
@@ -136,6 +136,18 @@ router.get("/", verificarToken, listarFases);
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Error"
+ *       403:
+ *         description: Acesso negado - Apenas professores e administradores podem criar fases
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               acessoNegado:
+ *                 summary: Usuário não tem permissão
+ *                 value:
+ *                   success: false
+ *                   message: "Acesso negado. Apenas professores e administradores podem realizar esta ação."
  *       404:
  *         description: Trilha não encontrada
  *         content:
@@ -143,7 +155,7 @@ router.get("/", verificarToken, listarFases);
  *             schema:
  *               $ref: "#/components/schemas/Error"
  */
-router.post("/", verificarToken, criarFase);
+router.post("/", verificarToken, verificarProfessor, criarFase);
 
 /**
  * @swagger
@@ -224,7 +236,7 @@ router.get("/trilha/:trilhaId", verificarToken, buscarFasesPorTrilha);
  *               $ref: "#/components/schemas/Error"
  *   put:
  *     summary: Atualiza uma fase pelo ID
- *     description: Atualiza os dados de uma fase existente. Se trilhaId for fornecido, valida se a trilha existe.
+ *     description: Atualiza os dados de uma fase existente. Se trilhaId for fornecido, valida se a trilha existe. PROFESSORES podem atualizar apenas fases de suas próprias trilhas. ADMINISTRADORES podem atualizar qualquer fase.
  *     tags: [Fases]
  *     security:
  *       - bearerAuth: []
@@ -282,9 +294,21 @@ router.get("/trilha/:trilhaId", verificarToken, buscarFasesPorTrilha);
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Error"
+ *       403:
+ *         description: Acesso negado - Apenas professores podem atualizar fases
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               acessoNegado:
+ *                 summary: Usuário não é professor
+ *                 value:
+ *                   success: false
+ *                   message: "Acesso negado. Apenas professores podem realizar esta ação."
  *   delete:
  *     summary: Deleta uma fase pelo ID
- *     description: Remove permanentemente uma fase do sistema
+ *     description: Remove permanentemente uma fase do sistema. PROFESSORES podem deletar apenas fases de suas próprias trilhas. ADMINISTRADORES podem deletar qualquer fase.
  *     tags: [Fases]
  *     security:
  *       - bearerAuth: []
@@ -319,9 +343,21 @@ router.get("/trilha/:trilhaId", verificarToken, buscarFasesPorTrilha);
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Error"
+ *       403:
+ *         description: Acesso negado - Apenas professores podem deletar fases
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               acessoNegado:
+ *                 summary: Usuário não é professor
+ *                 value:
+ *                   success: false
+ *                   message: "Acesso negado. Apenas professores podem realizar esta ação."
  */
 router.get("/:id", verificarToken, buscarFasePorId);
-router.put("/:id", verificarToken, atualizarFase);
-router.delete("/:id", verificarToken, deletarFase);
+router.put("/:id", verificarToken, verificarProfessor, atualizarFase);
+router.delete("/:id", verificarToken, verificarProfessor, deletarFase);
 
 export default router;

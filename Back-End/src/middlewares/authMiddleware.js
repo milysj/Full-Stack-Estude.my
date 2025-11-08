@@ -43,6 +43,68 @@ export const verificarToken = async (req, res, next) => {
       message: "Token inválido."
     });
   }
+};
 
+/**
+ * Middleware para verificar se o usuário é PROFESSOR ou ADMINISTRADOR
+ * Deve ser usado APÓS o middleware verificarToken
+ */
+export const verificarProfessor = async (req, res, next) => {
+  try {
+    // O usuário já deve estar no req.user pelo middleware verificarToken
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Usuário não autenticado."
+      });
+    }
 
+    // Verificar se o usuário é PROFESSOR ou ADMINISTRADOR
+    if (req.user.tipoUsuario !== "PROFESSOR" && req.user.tipoUsuario !== "ADMINISTRADOR") {
+      return res.status(403).json({
+        success: false,
+        message: "Acesso negado. Apenas professores e administradores podem realizar esta ação."
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error(`[Auth] Erro na verificação de professor: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Erro ao verificar permissões."
+    });
+  }
+};
+
+/**
+ * Middleware para verificar se o usuário é ADMINISTRADOR
+ * Deve ser usado APÓS o middleware verificarToken
+ */
+export const verificarAdministrador = async (req, res, next) => {
+  try {
+    // O usuário já deve estar no req.user pelo middleware verificarToken
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Usuário não autenticado."
+      });
+    }
+
+    // Verificar se o usuário é ADMINISTRADOR
+    if (req.user.tipoUsuario !== "ADMINISTRADOR") {
+      return res.status(403).json({
+        success: false,
+        message: "Acesso negado. Apenas administradores podem realizar esta ação."
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error(`[Auth] Erro na verificação de administrador: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Erro ao verificar permissões."
+    });
+  }
 };

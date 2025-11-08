@@ -64,9 +64,9 @@ const options = {
             },
             senha: {
               type: "string",
-              minLength: 6,
-              description: "Senha do aluno (mínimo 6 caracteres)",
-              example: "123456",
+              minLength: 8,
+              description: "Senha do aluno (mínimo 8 caracteres)",
+              example: "senha123",
             },
             dataNascimento: {
               type: "string",
@@ -104,9 +104,9 @@ const options = {
             },
             senha: {
               type: "string",
-              minLength: 6,
-              description: "Senha do professor (mínimo 6 caracteres)",
-              example: "123456",
+              minLength: 8,
+              description: "Senha do professor (mínimo 8 caracteres)",
+              example: "senha123",
             },
             dataNascimento: {
               type: "string",
@@ -422,7 +422,8 @@ const options = {
             },
             tipoUsuario: {
               type: "string",
-              enum: ["ALUNO", "PROFESSOR"],
+              enum: ["ALUNO", "PROFESSOR", "ADMINISTRADOR"],
+              description: "Tipo de usuário. ADMINISTRADOR só pode ser definido manualmente no banco de dados.",
               example: "ALUNO",
             },
             telefone: {
