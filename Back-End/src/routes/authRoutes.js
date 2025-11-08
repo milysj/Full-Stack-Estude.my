@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, criarPerfil, loginUser } from "../controllers/userController.js";
+import { registerUser, criarPerfil, loginUser, obterTermos } from "../controllers/userController.js";
 import { verificarToken } from "../middlewares/authMiddleware.js";
 import multer from "multer";
 import path from "path";
@@ -83,17 +83,27 @@ const upload = multer({ storage });
  *               $ref: "#/components/schemas/Error"
  *             examples:
  *               usuarioNaoEncontrado:
+ *                 summary: Usuário não encontrado
  *                 value:
  *                   message: "Usuário não encontrado"
  *               senhaIncorreta:
+ *                 summary: Senha incorreta
  *                 value:
  *                   message: "Senha incorreta"
+ *               senhaInvalida:
+ *                 summary: Senha inválida
+ *                 value:
+ *                   message: "Senha inválida"
  *       404:
  *         description: Usuário não encontrado
  *         content:
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               usuarioNaoEncontrado:
+ *                 value:
+ *                   message: "Usuário não encontrado"
  */
 router.post("/login", loginUser);
 
@@ -105,6 +115,9 @@ router.post("/login", loginUser);
  *     description: |
  *       Endpoint público para registro de novos usuários. Não requer autenticação.
  *       Aceita dois tipos de usuário: ALUNO (sem campos adicionais) ou PROFESSOR (requer registro e titulação).
+ *       Requisitos: 
+ *       - O usuário deve ter no mínimo 14 anos de idade.
+ *       - É obrigatório aceitar os termos de uso e política de privacidade (aceiteTermos: true).
  *     tags: [Autenticação]
  *     security: []
  *     requestBody:
@@ -124,6 +137,7 @@ router.post("/login", loginUser);
  *                 senha: "123456"
  *                 dataNascimento: "2000-08-06"
  *                 tipoUsuario: "ALUNO"
+ *                 aceiteTermos: true
  *             professor:
  *               summary: Exemplo de cadastro de professor
  *               value:
@@ -134,6 +148,7 @@ router.post("/login", loginUser);
  *                 tipoUsuario: "PROFESSOR"
  *                 registro: "123456"
  *                 titulacao: "Doutor"
+ *                 aceiteTermos: true
  *     responses:
  *       201:
  *         description: Usuário registrado com sucesso
@@ -146,7 +161,7 @@ router.post("/login", loginUser);
  *                   type: string
  *                   example: "Usuário cadastrado com sucesso!"
  *       400:
- *         description: Dados inválidos ou email já cadastrado
+ *         description: Dados inválidos, email já cadastrado ou idade insuficiente
  *         content:
  *           application/json:
  *             schema:
@@ -155,6 +170,18 @@ router.post("/login", loginUser);
  *               emailExiste:
  *                 value:
  *                   message: "Email já cadastrado"
+ *               idadeInsuficiente:
+ *                 value:
+ *                   message: "É necessário ter no mínimo 14 anos para criar uma conta"
+ *               dataInvalida:
+ *                 value:
+ *                   message: "Data de nascimento inválida"
+ *               dataFutura:
+ *                 value:
+ *                   message: "Data de nascimento não pode ser no futuro"
+ *               termoNaoAceito:
+ *                 value:
+ *                   message: "É necessário aceitar os termos de uso e política de privacidade para criar uma conta"
  *               dadosInvalidos:
  *                 value:
  *                   message: "Dados inválidos ou email já cadastrado"
@@ -166,6 +193,63 @@ router.post("/login", loginUser);
  *               $ref: "#/components/schemas/Error"
  */
 router.post("/register", registerUser);
+
+/**
+ * @swagger
+ * /api/auth/termos:
+ *   get:
+ *     summary: Obtém os termos de uso e política de privacidade
+ *     description: Endpoint público que retorna os termos de uso e política de privacidade da plataforma. Não requer autenticação.
+ *     tags: [Autenticação]
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Termos de uso e política de privacidade retornados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 termosUso:
+ *                   type: object
+ *                   properties:
+ *                     titulo:
+ *                       type: string
+ *                       example: "Termos de Uso"
+ *                     versao:
+ *                       type: string
+ *                       example: "1.0"
+ *                     dataAtualizacao:
+ *                       type: string
+ *                       format: date
+ *                       example: "2024-01-01"
+ *                     conteudo:
+ *                       type: string
+ *                       description: "Conteúdo completo dos termos de uso"
+ *                 politicaPrivacidade:
+ *                   type: object
+ *                   properties:
+ *                     titulo:
+ *                       type: string
+ *                       example: "Política de Privacidade"
+ *                     versao:
+ *                       type: string
+ *                       example: "1.0"
+ *                     dataAtualizacao:
+ *                       type: string
+ *                       format: date
+ *                       example: "2024-01-01"
+ *                     conteudo:
+ *                       type: string
+ *                       description: "Conteúdo completo da política de privacidade"
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ */
+router.get("/termos", obterTermos);
 
 /**
  * @swagger
@@ -253,18 +337,19 @@ router.post("/register", registerUser);
  *             schema:
  *               $ref: "#/components/schemas/Error"
  *       409:
- *         description: Perfil já criado. Não é possível criar o perfil novamente.
+ *         description: Conflito - Perfil já criado ou username já em uso
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Perfil já criado. Você não pode criar o perfil novamente."
- *                 perfilCriado:
- *                   type: boolean
- *                   example: true
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               perfilJaCriado:
+ *                 value:
+ *                   message: "Perfil já criado. Você não pode criar o perfil novamente."
+ *                   perfilCriado: true
+ *               usernameDuplicado:
+ *                 value:
+ *                   message: "Username já está em uso. Por favor, escolha outro username."
  */
 router.post("/criarPerfil", verificarToken, criarPerfil);
 

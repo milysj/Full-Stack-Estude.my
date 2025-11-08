@@ -154,8 +154,8 @@ export const salvarResultado = async (req, res) => {
       };
     }
 
-    // Buscar dados do usuário para resposta
-    const usuario = await User.findById(userId).select("-senha");
+    // Buscar dados do usuário para resposta (sem dados sensíveis)
+    const usuario = await User.findById(userId).select("-senha -email -dataNascimento");
 
     res.status(201).json({
       message: "Resultado salvo com sucesso",
@@ -365,7 +365,7 @@ export const obterProgressoTrilha = async (req, res) => {
 export const obterDadosUsuario = async (req, res) => {
   try {
     const userId = req.user._id;
-    const usuario = await User.findById(userId).select("-senha");
+    const usuario = await User.findById(userId).select("-senha -email -dataNascimento");
 
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
@@ -390,7 +390,6 @@ export const obterDadosUsuario = async (req, res) => {
       usuario: {
         _id: usuario._id,
         nome: usuario.nome,
-        email: usuario.email,
         username: usuario.username,
         personagem: usuario.personagem,
         fotoPerfil: usuario.fotoPerfil,

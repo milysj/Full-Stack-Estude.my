@@ -22,6 +22,7 @@ const router = express.Router();
  * /api/home:
  *   get:
  *     summary: Obtém os dados da tela inicial do usuário
+ *     description: Retorna as trilhas organizadas em seções (novidades, populares e continue) junto com dados do usuário autenticado
  *     tags: [Home]
  *     security:
  *       - bearerAuth: []
@@ -33,50 +34,43 @@ const router = express.Router();
  *             schema:
  *               type: object
  *               properties:
- *                 novidades:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         example: "671f23a8bc12ab3456f90e12"
- *                       titulo:
- *                         type: string
- *                         example: "Nova Trilha"
- *                       descricao:
- *                         type: string
- *                         example: "Descrição da trilha"
- *                 populares:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         example: "671f23a8bc12ab3456f90e34"
- *                       titulo:
- *                         type: string
- *                         example: "Trilha Popular"
- *                       descricao:
- *                         type: string
- *                         example: "Descrição da trilha popular"
- *                 continue:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         example: "671f23a8bc12ab3456f90e56"
- *                       titulo:
- *                         type: string
- *                         example: "Trilha em andamento"
- *                       progresso:
- *                         type: number
- *                         example: 45
+ *                 usuario:
+ *                   type: object
+ *                   properties:
+ *                     nome:
+ *                       type: string
+ *                     materiaFavorita:
+ *                       type: string
+ *                     personagem:
+ *                       type: string
+ *                     fotoPerfil:
+ *                       type: string
+ *                 trilhas:
+ *                   type: object
+ *                   properties:
+ *                     novidades:
+ *                       type: array
+ *                       description: Últimas 10 trilhas criadas
+ *                       items:
+ *                         $ref: "#/components/schemas/Trilha"
+ *                     populares:
+ *                       type: array
+ *                       description: 10 trilhas mais acessadas
+ *                       items:
+ *                         $ref: "#/components/schemas/Trilha"
+ *                     continue:
+ *                       type: array
+ *                       description: Trilhas iniciadas pelo usuário (máximo 10)
+ *                       items:
+ *                         $ref: "#/components/schemas/Trilha"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *       500:
+ *         description: Erro interno do servidor
  */
 router.get("/", verificarToken, getHomeData);
 

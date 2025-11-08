@@ -25,71 +25,11 @@ const upload = multer({ dest: "uploads/" });
  *   description: Rotas relacionadas aos usuários e autenticação
  */
 
-/**
- * @swagger
- * /usuarios/criarPerfil:
- *   post:
- *     summary: Cria um novo perfil de usuário
- *     description: Cria um perfil para o usuário autenticado. É necessário enviar um token JWT no header e o arquivo da foto de perfil.
- *     tags: [Usuários]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *                 example: "joaovictor"
- *               personagem:
- *                 type: string
- *                 example: "guerreiro"
- *               fotoPerfil:
- *                 type: string
- *                 format: binary
- *     responses:
- *       201:
- *         description: Perfil criado com sucesso
- *       400:
- *         description: Dados inválidos
- *       401:
- *         description: Token ausente ou inválido
- */
-router.post("/criarPerfil", verificarToken, upload.single("fotoPerfil"), criarPerfil);
+
 
 /**
  * @swagger
- * /usuarios/login:
- *   post:
- *     summary: Faz login do usuário
- *     tags: [Usuários]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *                 example: "joao@email.com"
- *               senha:
- *                 type: string
- *                 example: "123456"
- *     responses:
- *       200:
- *         description: Login realizado com sucesso e token gerado
- *       401:
- *         description: Credenciais inválidas
- */
-router.post("/login", loginUser);
-
-/**
- * @swagger
- * /usuarios/verify:
+ * /api/users/verify:
  *   get:
  *     summary: Verifica se o token de autenticação é válido
  *     description: Endpoint leve que apenas verifica se o usuário está autenticado, retornando apenas o status de autenticação
@@ -117,25 +57,41 @@ router.get("/verify", verificarToken, verificarAutenticacao);
 
 /**
  * @swagger
- * /usuarios/me:
+ * /api/users/me:
  *   get:
  *     summary: Busca dados do usuário autenticado
+ *     description: Retorna todos os dados do usuário autenticado, exceto a senha
  *     tags: [Usuários]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Dados do usuário retornados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Usuario"
+ *       404:
+ *         description: Usuário não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.get("/me", verificarToken, buscarMeusDados);
 
 /**
  * @swagger
- * /usuarios/dados-pessoais:
+ * /api/users/dados-pessoais:
  *   put:
  *     summary: Atualiza dados pessoais do usuário
+ *     description: Atualiza os dados pessoais do usuário autenticado. Apenas os campos fornecidos serão atualizados.
  *     tags: [Usuários]
  *     security:
  *       - bearerAuth: []
@@ -148,26 +104,55 @@ router.get("/me", verificarToken, buscarMeusDados);
  *             properties:
  *               nome:
  *                 type: string
+ *                 description: Nome completo do usuário
+ *                 example: "João Victor Silva"
  *               telefone:
  *                 type: string
+ *                 description: Número de telefone
+ *                 example: "(11) 99999-9999"
  *               endereco:
  *                 type: string
+ *                 description: Endereço completo
+ *                 example: "Rua Exemplo, 123 - São Paulo, SP"
  *               dataNascimento:
  *                 type: string
  *                 format: date
+ *                 description: Data de nascimento no formato YYYY-MM-DD
+ *                 example: "2000-08-06"
  *     responses:
  *       200:
  *         description: Dados atualizados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Dados pessoais atualizados com sucesso!"
+ *                 usuario:
+ *                   $ref: "#/components/schemas/Usuario"
+ *       404:
+ *         description: Usuário não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.put("/dados-pessoais", verificarToken, atualizarDadosPessoais);
 
 /**
  * @swagger
- * /usuarios/mudar-senha:
+ * /api/users/mudar-senha:
  *   put:
  *     summary: Altera a senha do usuário autenticado
+ *     description: Altera a senha do usuário autenticado. Requer a senha atual para validação. A nova senha deve ter pelo menos 6 caracteres.
  *     tags: [Usuários]
  *     security:
  *       - bearerAuth: []
@@ -183,19 +168,48 @@ router.put("/dados-pessoais", verificarToken, atualizarDadosPessoais);
  *             properties:
  *               senhaAtual:
  *                 type: string
+ *                 description: Senha atual do usuário
+ *                 example: "123456"
  *               novaSenha:
  *                 type: string
+ *                 minLength: 6
+ *                 description: Nova senha (mínimo 6 caracteres)
+ *                 example: "novaSenha123"
  *     responses:
  *       200:
  *         description: Senha alterada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Senha alterada com sucesso!"
+ *       400:
+ *         description: Campos obrigatórios ausentes ou nova senha muito curta
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  *       401:
  *         description: Senha atual incorreta ou token inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *       404:
+ *         description: Usuário não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.put("/mudar-senha", verificarToken, mudarSenha);
 
 /**
  * @swagger
- * /usuarios/solicitar-recuperacao:
+ * /api/users/solicitar-recuperacao:
  *   post:
  *     summary: Solicita recuperação de senha (envia email com link)
  *     tags: [Usuários]
@@ -220,7 +234,7 @@ router.post("/solicitar-recuperacao", solicitarRecuperacaoSenha);
 
 /**
  * @swagger
- * /usuarios/verificar-token/{token}:
+ * /api/users/verificar-token/{token}:
  *   get:
  *     summary: Verifica se token de recuperação é válido
  *     tags: [Usuários]
@@ -240,7 +254,7 @@ router.get("/verificar-token/:token", verificarTokenReset);
 
 /**
  * @swagger
- * /usuarios/redefinir-senha:
+ * /api/users/redefinir-senha:
  *   post:
  *     summary: Redefine senha usando token recebido por email
  *     tags: [Usuários]
@@ -268,9 +282,10 @@ router.post("/redefinir-senha", redefinirSenha);
 
 /**
  * @swagger
- * /usuarios/me:
+ * /api/users/me:
  *   delete:
  *     summary: Exclui a conta do usuário autenticado
+ *     description: Remove permanentemente a conta do usuário autenticado. Requer confirmação com a senha atual.
  *     tags: [Usuários]
  *     security:
  *       - bearerAuth: []
@@ -285,11 +300,37 @@ router.post("/redefinir-senha", redefinirSenha);
  *             properties:
  *               senha:
  *                 type: string
+ *                 description: Senha atual do usuário para confirmação
+ *                 example: "123456"
  *     responses:
  *       200:
  *         description: Conta excluída com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Conta excluída com sucesso!"
+ *       400:
+ *         description: Senha é obrigatória
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  *       401:
  *         description: Senha incorreta ou token inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *       404:
+ *         description: Usuário não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.delete("/me", verificarToken, excluirConta);
 

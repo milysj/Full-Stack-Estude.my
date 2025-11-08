@@ -33,6 +33,7 @@ const router = express.Router();
  * /api/trilhas:
  *   post:
  *     summary: Cria uma nova trilha
+ *     description: Cria uma nova trilha associada ao usuário autenticado. A imagem padrão será aplicada se não fornecida.
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
@@ -46,36 +47,91 @@ const router = express.Router();
  *               - titulo
  *               - descricao
  *               - materia
- *               - faseSelecionada
  *             properties:
  *               titulo:
  *                 type: string
- *                 example: "Matemática"
+ *                 description: Título da trilha
+ *                 example: "Matemática Básica"
  *               descricao:
  *                 type: string
+ *                 description: Descrição da trilha
  *                 example: "Trilha introdutória sobre fundamentos da matemática."
  *               materia:
  *                 type: string
+ *                 description: Matéria da trilha
  *                 example: "Matemática"
  *               dificuldade:
  *                 type: string
+ *                 enum: [Facil, Medio, Dificil]
+ *                 description: Nível de dificuldade
  *                 example: "Facil"
  *               disponibilidade:
  *                 type: string
- *                 example: "Privado"
+ *                 enum: [Aberto, Privado]
+ *                 description: Disponibilidade da trilha
+ *                 example: "Aberto"
  *               pagamento:
  *                 type: string
+ *                 enum: [Gratuita, Paga]
+ *                 description: Tipo de pagamento
  *                 example: "Gratuita"
+ *               imagem:
+ *                 type: string
+ *                 description: "URL da imagem da trilha (opcional, padrão /img/fases/vila.jpg)"
+ *                 example: "/img/fases/vila.jpg"
  *               faseSelecionada:
  *                 type: number
+ *                 description: Número de fases selecionadas
  *                 example: 1
  *     responses:
  *       201:
  *         description: Trilha criada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Trilha"
  *       400:
  *         description: Dados inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               dadosInvalidos:
+ *                 value:
+ *                   message: "Dados inválidos"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               tokenAusente:
+ *                 summary: Token não fornecido
+ *                 value:
+ *                   success: false
+ *                   message: "Acesso negado. Token não fornecido."
+ *               tokenExpirado:
+ *                 summary: Token expirado
+ *                 value:
+ *                   success: false
+ *                   message: "Token expirado. Faça login novamente."
+ *               tokenInvalido:
+ *                 summary: Token inválido
+ *                 value:
+ *                   success: false
+ *                   message: "Token inválido."
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               erroServidor:
+ *                 value:
+ *                   message: "Erro ao criar trilha"
  */
 router.post("/", verificarToken, criarTrilha);
 
@@ -84,6 +140,7 @@ router.post("/", verificarToken, criarTrilha);
  * /api/trilhas:
  *   get:
  *     summary: Lista todas as trilhas do usuário autenticado
+ *     description: Retorna todas as trilhas criadas pelo usuário autenticado, ordenadas por data de criação (mais recentes primeiro)
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
@@ -95,20 +152,15 @@ router.post("/", verificarToken, criarTrilha);
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   titulo:
- *                     type: string
- *                   descricao:
- *                     type: string
- *                   materia:
- *                     type: string
- *                   usuario:
- *                     type: string
+ *                 $ref: "#/components/schemas/Trilha"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *       500:
+ *         description: Erro interno do servidor
  */
 router.get("/", verificarToken, listarTrilhas);
 
@@ -193,13 +245,26 @@ router.delete("/:id", verificarToken, deletarTrilha);
  * @swagger
  * /api/trilhas/novidades:
  *   get:
- *     summary: Lista as trilhas mais recentes
+ *     summary: Lista as trilhas mais recentes que o usuário ainda não iniciou
+ *     description: Retorna as 10 trilhas mais recentes que o usuário autenticado ainda não iniciou, ordenadas por data de criação
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de trilhas recentes retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Trilha"
+ *       401:
+ *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.get("/novidades", verificarToken, trilhasNovidades);
 
@@ -207,11 +272,21 @@ router.get("/novidades", verificarToken, trilhasNovidades);
  * @swagger
  * /api/trilhas/populares:
  *   get:
- *     summary: Lista as trilhas populares (público)
+ *     summary: Lista as trilhas mais populares (público)
+ *     description: Retorna as 10 trilhas mais populares baseadas em visualizações. Endpoint público, não requer autenticação.
  *     tags: [Trilhas]
+ *     security: []
  *     responses:
  *       200:
  *         description: Lista de trilhas populares retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Trilha"
+ *       500:
+ *         description: Erro interno do servidor
  */
 router.get("/populares", trilhasPopulares);
 
@@ -220,14 +295,25 @@ router.get("/populares", trilhasPopulares);
  * /api/trilhas/continue:
  *   get:
  *     summary: Lista as trilhas em andamento do usuário
+ *     description: Retorna as trilhas que o usuário autenticado já iniciou, ordenadas por data de atualização (mais recentes primeiro). Limite de 10 trilhas.
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de trilhas em andamento retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Trilha"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.get("/continue", verificarToken, trilhasContinue);
 
@@ -236,6 +322,7 @@ router.get("/continue", verificarToken, trilhasContinue);
  * /api/trilhas/iniciar/{trilhaId}:
  *   post:
  *     summary: Registra que o usuário iniciou uma trilha
+ *     description: Adiciona o usuário autenticado à lista de usuários que iniciaram a trilha. Se o usuário já estiver na lista, não faz nada.
  *     tags: [Trilhas]
  *     security:
  *       - bearerAuth: []
@@ -246,15 +333,68 @@ router.get("/continue", verificarToken, trilhasContinue);
  *         schema:
  *           type: string
  *         description: ID da trilha a ser iniciada
+ *         example: "671f23a8bc12ab3456f90e12"
  *     responses:
  *       200:
  *         description: Trilha iniciada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Trilha iniciada com sucesso"
+ *                 trilha:
+ *                   $ref: "#/components/schemas/Trilha"
  *       400:
  *         description: trilhaId é obrigatório
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               trilhaIdObrigatorio:
+ *                 value:
+ *                   message: "trilhaId é obrigatório"
  *       404:
  *         description: Trilha não encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *             examples:
+ *               trilhaNaoEncontrada:
+ *                 value:
+ *                   message: "Trilha não encontrada"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *             examples:
+ *               tokenAusente:
+ *                 summary: Token não fornecido
+ *                 value:
+ *                   success: false
+ *                   message: "Acesso negado. Token não fornecido."
+ *               tokenExpirado:
+ *                 summary: Token expirado
+ *                 value:
+ *                   success: false
+ *                   message: "Token expirado. Faça login novamente."
+ *               tokenInvalido:
+ *                 summary: Token inválido
+ *                 value:
+ *                   success: false
+ *                   message: "Token inválido."
  */
 router.post("/iniciar/:trilhaId", verificarToken, iniciarTrilha);
 

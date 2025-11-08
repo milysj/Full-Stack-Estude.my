@@ -19,7 +19,10 @@ const UserSchema = new mongoose.Schema(
     },
 
     // Campos de perfil
-    username: { type: String, default: "" },
+    username: { 
+      type: String, 
+      default: "",
+    },
     personagem: { 
       type: String, 
       enum: ["", "Guerreiro", "Mago", "Samurai"], 
@@ -36,8 +39,31 @@ const UserSchema = new mongoose.Schema(
     // Campos opcionais de dados pessoais
     telefone: { type: String, default: "" },
     endereco: { type: String, default: "" },
+    
+    // Termo de consentimento
+    aceiteTermos: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
+    dataAceiteTermos: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
+);
+
+// Criar índice único parcial para username (apenas valores não vazios)
+// Isso garante que apenas um usuário pode ter um determinado username
+// Mas permite múltiplos usuários com username vazio
+UserSchema.index(
+  { username: 1 },
+  { 
+    unique: true, 
+    sparse: true,
+    partialFilterExpression: { username: { $ne: "", $exists: true } }
+  }
 );
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);

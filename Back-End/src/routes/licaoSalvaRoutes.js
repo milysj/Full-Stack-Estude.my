@@ -21,6 +21,7 @@ const router = express.Router();
  * /api/licoes-salvas:
  *   post:
  *     summary: Salva uma trilha como favorita
+ *     description: Adiciona uma trilha à lista de favoritas do usuário. Verifica se a trilha existe e se já não está salva.
  *     tags: [Lições Salvas]
  *     security:
  *       - bearerAuth: []
@@ -40,10 +41,41 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: Trilha salva com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Trilha salva com sucesso"
+ *                 licaoSalva:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     usuario:
+ *                       type: string
+ *                     trilha:
+ *                       type: string
  *       400:
- *         description: Trilha já está salva ou dados inválidos
+ *         description: Trilha já está salva ou dados inválidos (trilhaId ausente)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
+ *       404:
+ *         description: Trilha não encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.post("/", verificarToken, salvarTrilha);
 
@@ -52,6 +84,7 @@ router.post("/", verificarToken, salvarTrilha);
  * /api/licoes-salvas/{trilhaId}:
  *   delete:
  *     summary: Remove uma trilha das favoritas
+ *     description: Remove uma trilha da lista de favoritas do usuário autenticado
  *     tags: [Lições Salvas]
  *     security:
  *       - bearerAuth: []
@@ -62,13 +95,30 @@ router.post("/", verificarToken, salvarTrilha);
  *         schema:
  *           type: string
  *         description: ID da trilha a ser removida
+ *         example: "671f23a8bc12ab3456f90e12"
  *     responses:
  *       200:
  *         description: Trilha removida com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Trilha removida das salvas com sucesso"
  *       404:
  *         description: Trilha não encontrada nas favoritas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.delete("/:trilhaId", verificarToken, removerTrilhaSalva);
 
@@ -77,6 +127,7 @@ router.delete("/:trilhaId", verificarToken, removerTrilhaSalva);
  * /api/licoes-salvas:
  *   get:
  *     summary: Lista todas as trilhas salvas pelo usuário
+ *     description: Retorna todas as trilhas que o usuário autenticado salvou como favoritas, ordenadas por data de salvamento (mais recentes primeiro)
  *     tags: [Lições Salvas]
  *     security:
  *       - bearerAuth: []
@@ -88,17 +139,13 @@ router.delete("/:trilhaId", verificarToken, removerTrilhaSalva);
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   trilhaId:
- *                     type: string
- *                   trilha:
- *                     type: object
- *                     description: Dados completos da trilha
+ *                 $ref: "#/components/schemas/Trilha"
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.get("/", verificarToken, listarTrilhasSalvas);
 
@@ -107,6 +154,7 @@ router.get("/", verificarToken, listarTrilhasSalvas);
  * /api/licoes-salvas/verificar/{trilhaId}:
  *   get:
  *     summary: Verifica se uma trilha está salva pelo usuário
+ *     description: Verifica se uma trilha específica está na lista de favoritas do usuário autenticado
  *     tags: [Lições Salvas]
  *     security:
  *       - bearerAuth: []
@@ -117,6 +165,7 @@ router.get("/", verificarToken, listarTrilhasSalvas);
  *         schema:
  *           type: string
  *         description: ID da trilha a ser verificada
+ *         example: "671f23a8bc12ab3456f90e12"
  *     responses:
  *       200:
  *         description: Status da trilha verificado
@@ -128,8 +177,13 @@ router.get("/", verificarToken, listarTrilhasSalvas);
  *                 salva:
  *                   type: boolean
  *                   description: Indica se a trilha está salva
+ *                   example: true
  *       401:
  *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Error"
  */
 router.get("/verificar/:trilhaId", verificarToken, verificarSeSalva);
 

@@ -16,7 +16,7 @@ const router = express.Router();
  * /api/ranking:
  *   get:
  *     summary: Obtém o ranking de usuários baseado na média de acertos
- *     description: Ranking ordenado por média de acertos (descendente), com desempate por quantidade total de acertos
+ *     description: Ranking ordenado por média de acertos (descendente), com desempate por quantidade total de acertos. Retorna apenas os top 10 usuários que completaram pelo menos uma fase.
  *     tags: [Ranking]
  *     security:
  *       - bearerAuth: []
@@ -28,58 +28,17 @@ const router = express.Router();
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   position:
- *                     type: number
- *                   name:
- *                     type: string
- *                   totalFases:
- *                     type: number
- *                   totalAcertos:
- *                     type: number
- *                   mediaAcertos:
- *                     type: number
+ *                 $ref: "#/components/schemas/RankingItem"
  *       401:
  *         description: Token ausente ou inválido
- */
-router.get("/", verificarToken, obterRanking);
-
-/**
- * @swagger
- * /api/ranking/nivel:
- *   get:
- *     summary: Obtém o ranking de usuários baseado no nível e XP
- *     description: Ranking ordenado por nível (descendente), com desempate por XP total
- *     tags: [Ranking]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Ranking por nível retornado com sucesso
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   position:
- *                     type: number
- *                     description: Posição no ranking
- *                   name:
- *                     type: string
- *                     description: Nome do usuário
- *                   nivel:
- *                     type: number
- *                     description: Nível do usuário
- *                   xpTotal:
- *                     type: number
- *                     description: XP total do usuário
- *       401:
- *         description: Token ausente ou inválido
+ *               $ref: "#/components/schemas/Error"
+ *       500:
+ *         description: Erro interno do servidor
  */
-router.get("/nivel", verificarToken, obterRankingNivel);
+router.get("/", verificarToken, obterRanking);
 
 export default router;
 
