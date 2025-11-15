@@ -413,48 +413,7 @@ router.get("/continue", verificarToken, trilhasContinue);
  */
 router.post("/iniciar/:trilhaId", verificarToken, iniciarTrilha);
 
-/**
- * @swagger
- * /api/trilhas/buscar:
- *   get:
- *     summary: Busca trilhas públicas por termo
- *     description: Busca trilhas públicas (disponibilidade: "Aberto") que correspondam ao termo de busca. A busca é feita em título, descrição e matéria (case-insensitive). Endpoint público, não requer autenticação.
- *     tags: [Trilhas]
- *     security: []
- *     parameters:
- *       - in: query
- *         name: q
- *         required: true
- *         schema:
- *           type: string
- *         description: Termo de busca
- *         example: "matemática"
- *     responses:
- *       200:
- *         description: Lista de trilhas encontradas
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: "#/components/schemas/Trilha"
- *       400:
- *         description: Termo de busca é obrigatório
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/Error"
- *             examples:
- *               termoObrigatorio:
- *                 value:
- *                   message: "Termo de busca é obrigatório"
- *       500:
- *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/Error"
- */
+
 router.get("/buscar", verificarTokenOpcional, buscarTrilhas);
 
 export default router;

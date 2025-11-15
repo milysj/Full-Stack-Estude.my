@@ -393,6 +393,12 @@ export const buscarMeusDados = async (req, res) => {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
 
+    // Garantir que o tema existe (para usuários antigos)
+    if (!usuario.tema) {
+      usuario.tema = "light";
+      await usuario.save();
+    }
+
     res.json(usuario);
   } catch (error) {
     console.error("Erro ao buscar dados do usuário:", error);
@@ -640,6 +646,37 @@ export const excluirConta = async (req, res) => {
   } catch (error) {
     console.error("Erro ao excluir conta:", error);
     res.status(500).json({ message: "Erro ao excluir conta" });
+  }
+};
+
+// Atualizar tema do usuário
+export const atualizarTema = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { tema } = req.body;
+
+    if (!tema || (tema !== "light" && tema !== "dark")) {
+      return res.status(400).json({ 
+        message: "Tema inválido. Use 'light' ou 'dark'" 
+      });
+    }
+
+    const usuario = await User.findById(userId);
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    usuario.tema = tema;
+    await usuario.save();
+
+    const usuarioAtualizado = await User.findById(userId).select("-senha");
+    res.json({
+      message: "Tema atualizado com sucesso!",
+      tema: usuarioAtualizado.tema,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar tema:", error);
+    res.status(500).json({ message: "Erro ao atualizar tema" });
   }
 };
 

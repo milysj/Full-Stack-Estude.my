@@ -11,6 +11,7 @@ import {
   redefinirSenha,
   verificarTokenReset,
   excluirConta,
+  atualizarTema,
 } from "../controllers/userController.js";
 import { verificarToken } from "../middlewares/authMiddleware.js";
 import multer from "multer";
@@ -350,5 +351,8 @@ router.post("/redefinir-senha", redefinirSenha);
  *               $ref: "#/components/schemas/Error"
  */
 router.delete("/me", verificarToken, excluirConta);
+
+// Atualizar tema
+router.put("/tema", verificarToken, atualizarTema);
 
 export default router;

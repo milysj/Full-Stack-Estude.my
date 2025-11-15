@@ -50,6 +50,13 @@ const UserSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    
+    // Preferência de tema
+    tema: {
+      type: String,
+      enum: ["light", "dark"],
+      default: "light",
+    },
   },
   { timestamps: true }
 );
