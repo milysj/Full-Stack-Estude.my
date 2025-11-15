@@ -666,8 +666,18 @@ export const atualizarTema = async (req, res) => {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
 
+    // Garantir que o campo tema existe (para usuários antigos)
+    if (usuario.tema === undefined || usuario.tema === null) {
+      usuario.tema = "light"; // Valor padrão
+    }
+
     usuario.tema = tema;
-    await usuario.save();
+    
+    // Usar updateOne para evitar problemas de validação
+    await User.updateOne(
+      { _id: userId },
+      { $set: { tema: tema } }
+    );
 
     const usuarioAtualizado = await User.findById(userId).select("-senha");
     res.json({
@@ -676,7 +686,10 @@ export const atualizarTema = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao atualizar tema:", error);
-    res.status(500).json({ message: "Erro ao atualizar tema" });
+    res.status(500).json({ 
+      message: "Erro ao atualizar tema",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 
