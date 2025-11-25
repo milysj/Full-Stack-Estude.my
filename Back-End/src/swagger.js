@@ -15,7 +15,7 @@ const options = {
     },
     servers: [
       { 
-        url: process.env.API_URL || "https://estude-my.onrender.com",
+        url: process.env.API_URL || "https://backendestudemy.onrender.com/",
         description: "Servidor de produção",
       },
       { 
