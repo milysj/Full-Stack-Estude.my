@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, criarPerfil, loginUser, obterTermos } from "../controllers/userController.js";
+import { registerUser, criarPerfil, loginUser, obterTermos, verificarAutenticacao } from "../controllers/userController.js";
 import { verificarToken } from "../middlewares/authMiddleware.js";
 import multer from "multer";
 import path from "path";
@@ -367,5 +367,33 @@ router.get("/termos", obterTermos);
  *                   message: "Username já está em uso. Por favor, escolha outro username."
  */
 router.post("/criarPerfil", verificarToken, criarPerfil);
+
+/**
+ * @swagger
+ * /api/auth/verify:
+ *   get:
+ *     summary: Verifica se o token de autenticação é válido (alias)
+ *     description: Endpoint alternativo para /api/users/verify. Retorna apenas o status de autenticação.
+ *     tags: [Autenticação]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token válido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 authenticated:
+ *                   type: boolean
+ *                   example: true
+ *                 userId:
+ *                   type: string
+ *                   example: "690228badcd0071298c67b70"
+ *       401:
+ *         description: Token ausente ou inválido
+ */
+router.get("/verify", verificarToken, verificarAutenticacao);
 
 export default router;

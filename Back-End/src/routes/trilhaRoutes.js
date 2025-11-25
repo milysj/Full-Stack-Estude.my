@@ -11,6 +11,8 @@ import {
   trilhasContinue,
   iniciarTrilha,
   buscarTrilhas,
+  visualizarTrilha,
+  buscarTrilhaPorId,
 } from "../controllers/trilhaController.js";
 
 const router = express.Router();
@@ -413,7 +415,113 @@ router.get("/continue", verificarToken, trilhasContinue);
  */
 router.post("/iniciar/:trilhaId", verificarToken, iniciarTrilha);
 
-
+/**
+ * @swagger
+ * /api/trilhas/buscar:
+ *   get:
+ *     summary: Busca trilhas por termo
+ *     description: Busca trilhas por título, descrição ou matéria. ADMINISTRADOR vê todas as trilhas. Outros usuários autenticados veem todas as trilhas. Usuários não autenticados veem apenas trilhas públicas.
+ *     tags: [Trilhas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Termo de busca (título, descrição ou matéria)
+ *         example: "matemática"
+ *       - in: query
+ *         name: materia
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtrar por matéria específica
+ *         example: "Matemática"
+ *     responses:
+ *       200:
+ *         description: Lista de trilhas encontradas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Trilha"
+ *       500:
+ *         description: Erro interno do servidor
+ */
 router.get("/buscar", verificarTokenOpcional, buscarTrilhas);
+
+/**
+ * @swagger
+ * /api/trilhas/visualizar/{id}:
+ *   post:
+ *     summary: Incrementa visualizações de uma trilha
+ *     description: Registra uma visualização de uma trilha específica, incrementando o contador de visualizações
+ *     tags: [Trilhas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID da trilha
+ *         example: "671f23a8bc12ab3456f90e12"
+ *     responses:
+ *       200:
+ *         description: Visualização registrada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Visualização registrada"
+ *                 visualizacoes:
+ *                   type: number
+ *                   example: 151
+ *       400:
+ *         description: ID da trilha é obrigatório
+ *       404:
+ *         description: Trilha não encontrada
+ */
+router.post("/visualizar/:id", verificarTokenOpcional, visualizarTrilha);
+
+/**
+ * @swagger
+ * /api/trilhas/{id}:
+ *   get:
+ *     summary: Busca uma trilha por ID
+ *     description: Retorna os dados completos de uma trilha específica, incluindo informações do criador
+ *     tags: [Trilhas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID da trilha
+ *         example: "671f23a8bc12ab3456f90e12"
+ *     responses:
+ *       200:
+ *         description: Trilha encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Trilha"
+ *       400:
+ *         description: ID inválido
+ *       404:
+ *         description: Trilha não encontrada
+ *       500:
+ *         description: Erro interno do servidor
+ */
+router.get("/:id", verificarTokenOpcional, buscarTrilhaPorId);
 
 export default router;

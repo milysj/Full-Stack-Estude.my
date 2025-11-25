@@ -14,6 +14,11 @@ const faseSchema = new mongoose.Schema(
       ref: "Trilha",
       required: true,
     },
+    secaoId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Secao",
+      default: null, // Opcional - permite fases sem seção
+    },
     titulo: { type: String, required: true },
     descricao: { type: String },
     conteudo: { type: String, default: "" }, // Conteúdo da aula/explicação

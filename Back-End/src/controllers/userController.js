@@ -693,3 +693,127 @@ export const atualizarTema = async (req, res) => {
   }
 };
 
+// Atualizar personagem do usuário
+export const atualizarPersonagem = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { personagem, fotoPerfil } = req.body;
+
+    if (!personagem) {
+      return res.status(400).json({ 
+        message: "Personagem é obrigatório" 
+      });
+    }
+
+    const personagensValidos = ["Guerreiro", "Mago", "Samurai"];
+    if (!personagensValidos.includes(personagem)) {
+      return res.status(400).json({
+        message: `Personagem inválido. Escolha entre: ${personagensValidos.join(", ")}`,
+      });
+    }
+
+    const usuario = await User.findById(userId);
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    // Atualizar personagem
+    const updateData = { personagem };
+    
+    // Se fotoPerfil for fornecida, validar e atualizar
+    if (fotoPerfil) {
+      const fotosPermitidas = ["/img/guerreiro.png", "/img/mago.png", "/img/samurai.png"];
+      if (!fotosPermitidas.includes(fotoPerfil)) {
+        return res.status(400).json({
+          message: "Foto de perfil inválida. Escolha uma das fotos pré-definidas.",
+        });
+      }
+      updateData.fotoPerfil = fotoPerfil;
+    } else {
+      // Se não fornecer fotoPerfil, usar a padrão baseada no personagem
+      const fotoPadrao = {
+        Guerreiro: "/img/guerreiro.png",
+        Mago: "/img/mago.png",
+        Samurai: "/img/samurai.png",
+      };
+      updateData.fotoPerfil = fotoPadrao[personagem] || "/img/personagem.png";
+    }
+
+    await User.updateOne(
+      { _id: userId },
+      { $set: updateData }
+    );
+
+    const usuarioAtualizado = await User.findById(userId).select("-senha");
+    res.json({
+      message: "Personagem atualizado com sucesso!",
+      usuario: usuarioAtualizado,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar personagem:", error);
+    res.status(500).json({ 
+      message: "Erro ao atualizar personagem",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+};
+
+// Atualizar idioma do usuário
+export const atualizarIdioma = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { idioma } = req.body;
+
+    if (!idioma) {
+      return res.status(400).json({ 
+        message: "Idioma é obrigatório" 
+      });
+    }
+
+    const idiomasValidos = ["pt-BR", "en-US", "es-ES"];
+    if (!idiomasValidos.includes(idioma)) {
+      return res.status(400).json({ 
+        message: `Idioma inválido. Use: ${idiomasValidos.join(", ")}` 
+      });
+    }
+
+    const usuario = await User.findById(userId);
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    await User.updateOne(
+      { _id: userId },
+      { $set: { idioma: idioma } }
+    );
+
+    const usuarioAtualizado = await User.findById(userId).select("-senha");
+    res.json({
+      message: "Idioma atualizado com sucesso!",
+      idioma: usuarioAtualizado.idioma,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar idioma:", error);
+    res.status(500).json({ 
+      message: "Erro ao atualizar idioma",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+};
+
+// Listar usuários (apenas para verificação de username, retorna apenas dados públicos)
+export const listarUsuarios = async (req, res) => {
+  try {
+    // Retorna apenas campos públicos dos usuários (sem senha, email, etc)
+    // Útil para verificar se um username já existe
+    const usuarios = await User.find()
+      .select("username nome fotoPerfil personagem tipoUsuario")
+      .sort({ createdAt: -1 });
+
+    res.json(usuarios);
+  } catch (error) {
+    console.error("Erro ao listar usuários:", error);
+    res.status(500).json({ message: "Erro ao listar usuários" });
+  }
+};
+

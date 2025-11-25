@@ -1,10 +1,13 @@
 import Fase from "../models/fase.js";
 import Trilha from "../models/trilha.js";
+import Secao from "../models/secao.js";
+import Progresso from "../models/progresso.js";
+import mongoose from "mongoose";
 
 // Criar fase
 export const criarFase = async (req, res) => {
   try {
-    const { trilhaId, titulo, descricao, conteudo, ordem, perguntas } = req.body;
+    const { trilhaId, secaoId, titulo, descricao, conteudo, ordem, perguntas } = req.body;
 
     // Validação: trilhaId é obrigatório
     if (!trilhaId) {
@@ -17,6 +20,20 @@ export const criarFase = async (req, res) => {
       return res.status(404).json({ message: "Trilha não encontrada" });
     }
 
+    // Se secaoId foi fornecido, verificar se a seção existe e pertence à trilha
+    if (secaoId) {
+      if (!mongoose.Types.ObjectId.isValid(secaoId)) {
+        return res.status(400).json({ message: "ID da seção inválido" });
+      }
+      const secao = await Secao.findById(secaoId);
+      if (!secao) {
+        return res.status(404).json({ message: "Seção não encontrada" });
+      }
+      if (secao.trilhaId.toString() !== trilhaId) {
+        return res.status(400).json({ message: "A seção não pertence a esta trilha" });
+      }
+    }
+
     // Validação: ordem é obrigatória
     if (ordem === undefined || ordem === null) {
       return res.status(400).json({ message: "ordem é obrigatória" });
@@ -24,6 +41,7 @@ export const criarFase = async (req, res) => {
 
     const novaFase = await Fase.create({
       trilhaId,
+      secaoId: secaoId || null,
       titulo,
       descricao,
       conteudo: conteudo || "",
@@ -190,5 +208,98 @@ export const deletarFase = async (req, res) => {
   } catch (error) {
     console.error("Erro ao deletar fase:", error);
     res.status(500).json({ message: "Erro ao deletar fase", error: error.message });
+  }
+};
+
+// Buscar fases por seção
+export const buscarFasesPorSecao = async (req, res) => {
+  try {
+    const { secaoId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(secaoId)) {
+      return res.status(400).json({ message: "ID da seção inválido" });
+    }
+
+    // Verifica se a seção existe
+    const secao = await Secao.findById(secaoId);
+    if (!secao) {
+      return res.status(404).json({ message: "Seção não encontrada" });
+    }
+
+    const fases = await Fase.find({ secaoId })
+      .populate("trilhaId", "titulo descricao materia")
+      .sort({ ordem: 1 });
+
+    res.json(fases);
+  } catch (error) {
+    console.error("Erro ao buscar fases da seção:", error);
+    res.status(500).json({ message: "Erro ao buscar fases da seção", error: error.message });
+  }
+};
+
+// Concluir fase (registrar conclusão)
+export const concluirFase = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { faseId, pontuacao, acertos, erros } = req.body;
+
+    if (!faseId) {
+      return res.status(400).json({ message: "faseId é obrigatório" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(faseId)) {
+      return res.status(400).json({ message: "ID da fase inválido" });
+    }
+
+    // Verifica se a fase existe
+    const fase = await Fase.findById(faseId);
+    if (!fase) {
+      return res.status(404).json({ message: "Fase não encontrada" });
+    }
+
+    // Busca ou cria o progresso
+    let progresso = await Progresso.findOne({ userId, faseId });
+
+    const totalPerguntas = fase.perguntas?.length || 0;
+    const porcentagemAcertos = totalPerguntas > 0 
+      ? Math.round((acertos / totalPerguntas) * 100) 
+      : 0;
+
+    // Calcula XP baseado na porcentagem de acertos
+    const xpGanho = Math.round((porcentagemAcertos / 100) * 500); // Máximo 500 XP
+
+    if (!progresso) {
+      progresso = await Progresso.create({
+        userId,
+        faseId,
+        trilhaId: fase.trilhaId,
+        pontuacao: acertos || 0,
+        totalPerguntas,
+        porcentagemAcertos,
+        xpGanho,
+        concluido: true,
+        respostasUsuario: [],
+        perguntasRespondidas: [],
+      });
+    } else {
+      // Atualiza o progresso existente
+      progresso.pontuacao = acertos || progresso.pontuacao;
+      progresso.totalPerguntas = totalPerguntas;
+      progresso.porcentagemAcertos = porcentagemAcertos;
+      progresso.xpGanho = xpGanho;
+      progresso.concluido = true;
+      await progresso.save();
+    }
+
+    // Atualiza XP total do usuário (se necessário, pode chamar o ScoreService aqui)
+    // Por enquanto, apenas retornamos o progresso
+
+    res.json({
+      message: "Fase concluída com sucesso!",
+      progresso,
+    });
+  } catch (error) {
+    console.error("Erro ao concluir fase:", error);
+    res.status(500).json({ message: "Erro ao concluir fase", error: error.message });
   }
 };

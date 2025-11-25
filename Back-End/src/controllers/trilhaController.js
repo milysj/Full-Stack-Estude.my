@@ -1,4 +1,5 @@
 import Trilha from "../models/trilha.js";
+import mongoose from "mongoose";
 
 // Cria uma nova trilha
 export const criarTrilha = async (req, res) => {
@@ -294,5 +295,90 @@ export const buscarTrilhas = async (req, res) => {
   } catch (error) {
     console.error("Erro ao buscar trilhas:", error);
     res.status(500).json({ message: "Erro ao buscar trilhas", error: error.message });
+  }
+};
+
+// Busca uma trilha por ID
+export const buscarTrilhaPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?._id;
+    const tipoUsuario = req.user?.tipoUsuario;
+
+    console.log(`[buscarTrilhaPorId] Buscando trilha com ID: ${id}`);
+
+    if (!id) {
+      return res.status(400).json({ message: "ID da trilha é obrigatório" });
+    }
+
+    // Validar formato do ID do MongoDB
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log(`[buscarTrilhaPorId] ID inválido: ${id}`);
+      return res.status(400).json({ message: "ID da trilha inválido" });
+    }
+
+    // Popular dados do usuário criador baseado no tipo de usuário
+    let trilhaQuery = Trilha.findById(id).select("-usuariosIniciaram");
+
+    if (tipoUsuario === "ADMINISTRADOR") {
+      trilhaQuery = trilhaQuery.populate({
+        path: "usuario",
+        select: "nome username email tipoUsuario",
+      });
+    } else {
+      trilhaQuery = trilhaQuery.populate({
+        path: "usuario",
+        select: "nome username",
+      });
+    }
+
+    const trilha = await trilhaQuery;
+
+    if (!trilha) {
+      console.log(`[buscarTrilhaPorId] Trilha não encontrada no banco: ${id}`);
+      return res.status(404).json({ message: "Trilha não encontrada" });
+    }
+
+    console.log(`[buscarTrilhaPorId] Trilha encontrada: ${trilha._id}`);
+
+    // Converter para objeto para poder remover campos
+    const trilhaResponse = trilha.toObject();
+    delete trilhaResponse.usuariosIniciaram;
+
+    res.json(trilhaResponse);
+  } catch (error) {
+    console.error("Erro ao buscar trilha:", error);
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "ID da trilha inválido" });
+    }
+    res.status(500).json({ message: "Erro ao buscar trilha", error: error.message });
+  }
+};
+
+// Incrementa visualizações de uma trilha
+export const visualizarTrilha = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ message: "ID da trilha é obrigatório" });
+    }
+
+    const trilha = await Trilha.findById(id);
+    if (!trilha) {
+      return res.status(404).json({ message: "Trilha não encontrada" });
+    }
+
+    // Incrementa visualizações
+    trilha.visualizacoes = (trilha.visualizacoes || 0) + 1;
+    await trilha.save();
+
+    res.json({
+      message: "Visualização registrada",
+      visualizacoes: trilha.visualizacoes,
+    });
+  } catch (error) {
+    console.error("Erro ao registrar visualização:", error);
+    res.status(500).json({ message: "Erro ao registrar visualização" });
   }
 };

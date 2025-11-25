@@ -190,6 +190,42 @@ const options = {
             },
           },
         },
+        Secao: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              example: "671f23a8bc12ab3456f90e12",
+            },
+            trilhaId: {
+              type: "string",
+              description: "ID da trilha à qual a seção pertence",
+              example: "671f23a8bc12ab3456f90e12",
+            },
+            titulo: {
+              type: "string",
+              example: "Seção 1: Introdução",
+            },
+            descricao: {
+              type: "string",
+              example: "Conceitos básicos",
+            },
+            ordem: {
+              type: "number",
+              example: 1,
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+              example: "2024-01-15T10:30:00.000Z",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+              example: "2024-01-15T10:30:00.000Z",
+            },
+          },
+        },
         Fase: {
           type: "object",
           properties: {
@@ -205,6 +241,12 @@ const options = {
                 descricao: { type: "string" },
                 materia: { type: "string" },
               },
+            },
+            secaoId: {
+              type: "string",
+              description: "ID da seção à qual a fase pertence (opcional)",
+              example: "671f23a8bc12ab3456f90e12",
+              nullable: true,
             },
             titulo: {
               type: "string",
@@ -470,6 +512,10 @@ const options = {
         description: "Rotas relacionadas à criação, listagem e exclusão de fases"
       },
       {
+        name: "Seções",
+        description: "Rotas relacionadas ao gerenciamento de seções dentro das trilhas"
+      },
+      {
         name: "Progresso",
         description: "Rotas relacionadas ao progresso do usuário em fases e trilhas"
       },
@@ -480,6 +526,22 @@ const options = {
       {
         name: "Ranking",
         description: "Rotas relacionadas ao ranking de usuários"
+      },
+      {
+        name: "Feedback",
+        description: "Rotas relacionadas ao feedback dos usuários"
+      },
+      {
+        name: "Perguntas",
+        description: "Rotas relacionadas ao gerenciamento de perguntas das fases"
+      },
+      {
+        name: "Resultados",
+        description: "Rotas relacionadas aos resultados do jogo"
+      },
+      {
+        name: "Senha",
+        description: "Rotas relacionadas à recuperação de senha (compatibilidade)"
       }
     ]
   },
@@ -497,9 +559,14 @@ export default (app) => {
     "Home",
     "Trilhas",
     "Fases",
+    "Seções",
+    "Perguntas",
     "Progresso",
+    "Resultados",
     "Lições Salvas",
-    "Ranking"
+    "Ranking",
+    "Feedback",
+    "Senha"
   ];
 
   // Modificar o spec para garantir a ordem das tags

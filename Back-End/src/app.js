@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import trilhaRoutes from "./routes/trilhaRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import usuarioRoutes from "./routes/usuarioRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import homeRoutes from "./routes/homeRoutes.js";
 import perfilRoutes from "./routes/perfilRoutes.js";
@@ -11,6 +12,11 @@ import faseRoutes from "./routes/faseRoutes.js";
 import progressoRoutes from "./routes/progressoRoutes.js";
 import rankingRoutes from "./routes/rankingRoutes.js";
 import licaoSalvaRoutes from "./routes/licaoSalvaRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
+import perguntaRoutes from "./routes/perguntaRoutes.js";
+import resultadoRoutes from "./routes/resultadoRoutes.js";
+import senhaRoutes from "./routes/senhaRoutes.js";
+import secoesRoutes from "./routes/secoesRoutes.js";
 
 import { errorHandler } from "./middlewares/errorHandler.js";
 
@@ -72,6 +78,7 @@ app.get("/", (req, res) => {
 // Rotas
 app.use("/api/trilhas", trilhaRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/usuarios", usuarioRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/home", homeRoutes);
 app.use("/api", perfilRoutes);
@@ -79,6 +86,11 @@ app.use("/api/fases", faseRoutes);
 app.use("/api/progresso", progressoRoutes);
 app.use("/api/ranking", rankingRoutes);
 app.use("/api/licoes-salvas", licaoSalvaRoutes);
+app.use("/api/feedback", feedbackRoutes);
+app.use("/api/perguntas", perguntaRoutes);
+app.use("/api/resultados", resultadoRoutes);
+app.use("/api/senha", senhaRoutes);
+app.use("/api/secoes", secoesRoutes);
 
 // Middleware de erros
 app.use(errorHandler);

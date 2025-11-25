@@ -12,6 +12,9 @@ import {
   verificarTokenReset,
   excluirConta,
   atualizarTema,
+  atualizarPersonagem,
+  atualizarIdioma,
+  listarUsuarios,
 } from "../controllers/userController.js";
 import { verificarToken } from "../middlewares/authMiddleware.js";
 import multer from "multer";
@@ -352,7 +355,146 @@ router.post("/redefinir-senha", redefinirSenha);
  */
 router.delete("/me", verificarToken, excluirConta);
 
-// Atualizar tema
+/**
+ * @swagger
+ * /api/users/tema:
+ *   put:
+ *     summary: Atualiza o tema do usuário
+ *     description: Atualiza a preferência de tema (light/dark) do usuário autenticado
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tema
+ *             properties:
+ *               tema:
+ *                 type: string
+ *                 enum: [light, dark]
+ *                 description: Tema preferido do usuário
+ *                 example: "dark"
+ *     responses:
+ *       200:
+ *         description: Tema atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Tema atualizado com sucesso!"
+ *                 tema:
+ *                   type: string
+ *                   example: "dark"
+ *       400:
+ *         description: Tema inválido
+ *       401:
+ *         description: Token ausente ou inválido
+ *       404:
+ *         description: Usuário não encontrado
+ */
 router.put("/tema", verificarToken, atualizarTema);
+
+/**
+ * @swagger
+ * /api/users/atualizar-personagem:
+ *   put:
+ *     summary: Atualiza o personagem do usuário
+ *     description: Atualiza o personagem escolhido pelo usuário (Guerreiro, Mago ou Samurai)
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - personagem
+ *             properties:
+ *               personagem:
+ *                 type: string
+ *                 enum: [Guerreiro, Mago, Samurai]
+ *                 description: Personagem escolhido
+ *                 example: "Mago"
+ *               fotoPerfil:
+ *                 type: string
+ *                 enum: ["/img/guerreiro.png", "/img/mago.png", "/img/samurai.png"]
+ *                 description: URL da foto de perfil (opcional, será definida automaticamente se não fornecida)
+ *                 example: "/img/mago.png"
+ *     responses:
+ *       200:
+ *         description: Personagem atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Personagem atualizado com sucesso!"
+ *                 usuario:
+ *                   $ref: "#/components/schemas/Usuario"
+ *       400:
+ *         description: Personagem inválido ou dados inválidos
+ *       401:
+ *         description: Token ausente ou inválido
+ *       404:
+ *         description: Usuário não encontrado
+ */
+router.put("/atualizar-personagem", verificarToken, atualizarPersonagem);
+
+/**
+ * @swagger
+ * /api/users/idioma:
+ *   put:
+ *     summary: Atualiza o idioma do usuário
+ *     description: Atualiza a preferência de idioma do usuário autenticado
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - idioma
+ *             properties:
+ *               idioma:
+ *                 type: string
+ *                 enum: [pt-BR, en-US, es-ES]
+ *                 description: Idioma preferido do usuário
+ *                 example: "pt-BR"
+ *     responses:
+ *       200:
+ *         description: Idioma atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Idioma atualizado com sucesso!"
+ *                 idioma:
+ *                   type: string
+ *                   example: "pt-BR"
+ *       400:
+ *         description: Idioma inválido
+ *       401:
+ *         description: Token ausente ou inválido
+ *       404:
+ *         description: Usuário não encontrado
+ */
+router.put("/idioma", verificarToken, atualizarIdioma);
 
 export default router;

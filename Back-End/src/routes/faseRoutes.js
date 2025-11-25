@@ -4,6 +4,8 @@ import {
   listarFases,
   buscarFasePorId,
   buscarFasesPorTrilha,
+  buscarFasesPorSecao,
+  concluirFase,
   atualizarFase,
   deletarFase,
 } from "../controllers/faseController.js";
@@ -197,6 +199,93 @@ router.post("/", verificarToken, verificarProfessor, criarFase);
  *               $ref: "#/components/schemas/Error"
  */
 router.get("/trilha/:trilhaId", verificarToken, buscarFasesPorTrilha);
+
+/**
+ * @swagger
+ * /api/fases/secao/{secaoId}:
+ *   get:
+ *     summary: Busca todas as fases de uma seção específica
+ *     description: Retorna todas as fases de uma seção, ordenadas por ordem. Verifica se a seção existe antes de retornar as fases.
+ *     tags: [Fases]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: secaoId
+ *         in: path
+ *         required: true
+ *         description: ID da seção
+ *         schema:
+ *           type: string
+ *           example: "671f23a8bc12ab3456f90e12"
+ *     responses:
+ *       200:
+ *         description: Lista de fases retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Fase"
+ *       404:
+ *         description: Seção não encontrada
+ *       400:
+ *         description: ID da seção inválido
+ */
+router.get("/secao/:secaoId", verificarToken, buscarFasesPorSecao);
+
+/**
+ * @swagger
+ * /api/fases/concluir:
+ *   post:
+ *     summary: Registra a conclusão de uma fase
+ *     description: Registra que o usuário concluiu uma fase, calculando pontuação, porcentagem de acertos e XP ganho
+ *     tags: [Fases]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - faseId
+ *             properties:
+ *               faseId:
+ *                 type: string
+ *                 description: ID da fase concluída
+ *                 example: "671f23a8bc12ab3456f90e12"
+ *               pontuacao:
+ *                 type: number
+ *                 description: Pontuação total (opcional)
+ *                 example: 80
+ *               acertos:
+ *                 type: number
+ *                 description: Número de acertos
+ *                 example: 8
+ *               erros:
+ *                 type: number
+ *                 description: Número de erros
+ *                 example: 2
+ *     responses:
+ *       200:
+ *         description: Fase concluída com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Fase concluída com sucesso!"
+ *                 progresso:
+ *                   $ref: "#/components/schemas/Progresso"
+ *       400:
+ *         description: Dados inválidos
+ *       404:
+ *         description: Fase não encontrada
+ */
+router.post("/concluir", verificarToken, concluirFase);
 
 /**
  * @swagger
