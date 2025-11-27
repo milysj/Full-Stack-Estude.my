@@ -2,7 +2,7 @@
 
 
 O EstudeMy é uma plataforma de estudos gamificada, criada para tornar o aprendizado mais dinâmico e envolvente para jovens e estudantes.
-Professores podem disponibilizar seus cursos, aulas e conteúdos personalizados, enquanto alunos exploram diferentes trilhas de aprendizado, acumulam pontos, conquistas e medalhas conforme avançam nos estudos.
+Professores podem disponibilizar seus cursos, aulas e conteúdos personalizados, enquanto alunos exploram diferentes trilhas de aprendizado, acumulam pontos, conquistas e medalhas conforme avançam nos estudos. 
 
 ---
 
