@@ -15,7 +15,7 @@ const options = {
     },
     servers: [
       { 
-        url: process.env.SCORE_SERVICE_URL || "http://localhost:5001", 
+        url: process.env.SCORE_SERVICE_URL || "https://scoreestudemy.onrender.com/", 
         description: "Servidor do microserviço SCORE" 
       },
       { 

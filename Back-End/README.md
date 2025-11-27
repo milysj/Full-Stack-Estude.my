@@ -13,6 +13,8 @@ Professores podem disponibilizar seus cursos, aulas e conteúdos personalizados,
   - [📝 Sobre o Projeto](#-sobre-o-projeto)
   - [🏗️ Arquitetura do Sistema](#️-arquitetura-do-sistema)
   - [📋 Casos de uso](#-casos-de-uso)
+  - [📋 Requisitos Funcionais](#-requisitos-funcionais)
+  - [📋 Requisitos Não Funcionais](#-requisitos-não-funcionais)
   - [⚙️ Tecnologias Utilizadas](#️-tecnologias-utilizadas)
     - [Backend](#backend)
     - [DevOps](#devops)
@@ -37,7 +39,7 @@ Professores podem disponibilizar seus cursos, aulas e conteúdos personalizados,
 ## 📝 Sobre o Projeto
 
 O **EstudeMy** é uma plataforma de estudos gamificada, desenvolvida para incentivar o aprendizado de forma interativa e divertida.
-A aplicação fornece uma API RESTful completa que gerencia usuários, cursos, progresso e interações entre alunos e professores.
+A aplicação fornece uma API RESTful completa que gerencia usuários, cursos, progresso e interações entre alunos e professores. 
 
 O backend garante segurança, escalabilidade e integração simples com o frontend desenvolvido em React/Next.js, permitindo que o sistema evolua continuamente com novas funcionalidades educacionais.
 
